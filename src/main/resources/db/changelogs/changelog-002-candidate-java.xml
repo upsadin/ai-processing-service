@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+       http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="changelog-002-candidate-java" author="p.ulitko">
+
+        <insert tableName="ai_prompt">
+            <column name="ref" value="candidate_java"/>
+            <column name="prompt_template">
+                <![CDATA[
+Ты — ассистент по анализу резюме кандидатов.
+
+Входные данные:
+- Тип данных: резюме кандидата (произвольный текст, возможен шум)
+- Целевой профиль: Java Developer
+- Критерии отбора:
+  - коммерческий опыт Java от 2 лет
+  - опыт с PostgreSQL
+Задача:
+1. Проанализировать текст резюме.
+2. Определить, соответствует ли кандидат целевому профилю.
+3. Извлечь контактные данные, если они присутствуют в тексте.
+4. Если контакты явно не указаны — попытаться найти их в тексте (email, телефон, ссылки).
+5. Не придумывать данные, которых нет в тексте.
+
+Ответ вернуть СТРОГО в формате JSON следующей структуры:
+{
+  "matches": true | false,
+  "confidence": число от 0 до 1,
+  "reason": "причина решения",
+  "full_name": "фамилия имя отчество(при наличии)",
+   "contacts": {
+    "email": string | null,
+    "phone": string | null,
+    "linkedin": string | null,
+    "telegram": string | null
+  }
+}
+
+Текст резюме:
+{{payload}}
+]]>
+            </column>
+            <column name="schema_json">
+                <![CDATA[
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["matches", "confidence", "reason", "full_name", "contacts"],
+  "properties": {
+    "matches": {
+      "type": "boolean"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 5
+    },
+    "full_name": {
+      "type": "string",
+      "minLength": 3
+    },
+    "contacts": {
+      "type": "object",
+      "required": ["email", "phone", "linkedin", "telegram"],
+      "properties": {
+        "email": { "type": ["string", "null"] },
+        "phone": { "type": ["string", "null"] },
+        "linkedin": { "type": ["string", "null"] },
+        "telegram": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
+                ]]>
+            </column>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

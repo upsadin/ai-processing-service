@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: ai-processing-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ai_pipeline
+    username: ai_user
+    password: ai_pass
+  liquibase:
+      change-log: classpath:db/changelog.xml
+      enabled: true
+  data:
+    jdbc:
+      repositories:
+        enabled: true
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9094
+    topics:
+      incoming: ai.processing.raw
+      outgoing: ai.candidate.filtered
+      dlq: ai.processing.deserialization.dlq
+      processing-dlq: ai.processing.business.dlq
+    groups-id:
+      consumer: ai-processing
+      dlq: ai-processing-dlq
+
