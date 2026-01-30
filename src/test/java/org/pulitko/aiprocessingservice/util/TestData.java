@@ -13,6 +13,15 @@ public class TestData {
     public static final IncomingMessage INCOMING_MESSAGE = new IncomingMessage(
             TYPE_JAVACANDIDATE, REF_JAVACANDIDATE, PAYLOAD_JAVACANDIDATE
     );
+    public static final IncomingMessage INCOMING_MESSAGE_WITH_NULL_REF = new IncomingMessage(
+            TYPE_JAVACANDIDATE, null, PAYLOAD_JAVACANDIDATE
+    );
+    public static final IncomingMessage INCOMING_MESSAGE_WITH_NULL_PAYLOAD = new IncomingMessage(
+            TYPE_JAVACANDIDATE, REF_JAVACANDIDATE, null
+    );
+    public static final IncomingMessage INCOMING_MESSAGE_WITH_NULL_TYPE = new IncomingMessage(
+            null, REF_JAVACANDIDATE, PAYLOAD_JAVACANDIDATE
+    );
 
     public static final String TEMPLATE_JAVACANDIDATE = "Promt for java candidate";
     public static final String SCHEMA_JAVACANDIDATE = "java candidate CV";
