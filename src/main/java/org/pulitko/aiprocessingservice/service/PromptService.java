@@ -1,7 +1,7 @@
 package org.pulitko.aiprocessingservice.service;
 
 
-import org.pulitko.aiprocessingservice.prompt.Prompt;
+import org.pulitko.aiprocessingservice.model.Prompt;
 
 public interface PromptService {
 

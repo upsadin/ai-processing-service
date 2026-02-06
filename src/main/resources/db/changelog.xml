@@ -4,7 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <include file="changelogs/changelog-001-create-table.xml" relativeToChangelogFile="true"/>
+    <include file="changelogs/changelog-001-create-prompt-table.xml" relativeToChangelogFile="true"/>
     <include file="changelogs/changelog-002-candidate-java.xml" relativeToChangelogFile="true"/>
+    <include file="changelogs/changelog-003-create-deserialization-errors-table.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

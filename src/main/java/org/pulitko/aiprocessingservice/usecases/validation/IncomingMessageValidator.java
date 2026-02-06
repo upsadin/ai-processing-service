@@ -20,7 +20,7 @@ public class IncomingMessageValidator {
         Set<ConstraintViolation<IncomingMessage>> violations = validator.validate(message);
 
         if (!violations.isEmpty()) {
-            log.warn("Validation failed: {}", violations);
+            log.warn("Incoming message validation failed: {}", violations);
             throw new IncomingMessageValidationException(violations);
         }
     }

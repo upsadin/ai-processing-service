@@ -1,5 +1,6 @@
-package org.pulitko.aiprocessingservice.prompt;
+package org.pulitko.aiprocessingservice.repository;
 
+import org.pulitko.aiprocessingservice.model.PromptEntity;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;

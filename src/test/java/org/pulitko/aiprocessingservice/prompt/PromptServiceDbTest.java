@@ -6,6 +6,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pulitko.aiprocessingservice.exception.PromptNotFoundException;
+import org.pulitko.aiprocessingservice.model.Prompt;
+import org.pulitko.aiprocessingservice.model.PromptEntity;
+import org.pulitko.aiprocessingservice.repository.PromptRepository;
+import org.pulitko.aiprocessingservice.service.PromptServiceDb;
 
 import java.util.Optional;
 

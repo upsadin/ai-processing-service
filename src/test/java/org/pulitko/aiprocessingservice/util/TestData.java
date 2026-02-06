@@ -1,8 +1,10 @@
 package org.pulitko.aiprocessingservice.util;
 
+import org.pulitko.aiprocessingservice.model.Contacts;
 import org.pulitko.aiprocessingservice.model.IncomingMessage;
-import org.pulitko.aiprocessingservice.prompt.Prompt;
-import org.pulitko.aiprocessingservice.prompt.PromptEntity;
+import org.pulitko.aiprocessingservice.model.ProcessedResult;
+import org.pulitko.aiprocessingservice.model.Prompt;
+import org.pulitko.aiprocessingservice.model.PromptEntity;
 
 public class TestData {
     public static final String SOURCE_ID_JAVACANDIDATE = "src-1";
@@ -27,6 +29,8 @@ public class TestData {
     public static final String SCHEMA_JAVACANDIDATE = "java candidate CV";
 
     public static final Prompt PROMPT = new Prompt(REF_JAVACANDIDATE, TEMPLATE_JAVACANDIDATE, SCHEMA_JAVACANDIDATE);
+
+    public static final String PROMPT_FOR_AI = "Prompt for AI analyze";
     public static final PromptEntity PROMPT_ENTITY = PromptEntity.builder()
             .withId(1L)
             .withRef(REF_JAVACANDIDATE)
@@ -50,4 +54,8 @@ public class TestData {
                       }
                     }
                             """;
+
+    public static final ProcessedResult SUCCESS_PROCESSED_RESULT =
+            new ProcessedResult(true, 0.9f, "Reason", "Иван Иванов",
+                    new Contacts("email", "phone", "linkedin", "telegram"));
 }

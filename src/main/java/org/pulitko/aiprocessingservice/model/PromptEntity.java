@@ -1,7 +1,8 @@
-package org.pulitko.aiprocessingservice.prompt;
+package org.pulitko.aiprocessingservice.model;
 
 import lombok.Builder;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
@@ -13,7 +14,9 @@ public class PromptEntity {
     @Id
     private Long id;
     private String ref;
+    @Column("prompt_template")
     private String promptTemplate;
+    @Column("schema_json")
     private String schemaJson;
     private boolean active;
     private Instant createdAt;

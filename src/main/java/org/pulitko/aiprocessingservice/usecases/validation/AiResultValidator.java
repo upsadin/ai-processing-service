@@ -24,26 +24,26 @@ public class AiResultValidator {
 
     private final Map<String, JsonSchema> schemaCache = new ConcurrentHashMap<>();
 
-    public void validate(String aiResultJson, String schemaJson, String schemaKey) {
+    public void validate(String aiResultJson, String schemaJson, String ref) {
         try {
             JsonNode jsonNode = objectMapper.readTree(aiResultJson);
-            JsonSchema schema = schemaCache.computeIfAbsent(schemaKey, k -> schemaFactory.getSchema(schemaJson));
+            JsonSchema schema = schemaCache.computeIfAbsent(ref, k -> schemaFactory.getSchema(schemaJson));
             Set<ValidationMessage> errors = schema.validate(jsonNode);
             if (!errors.isEmpty()) {
                 String errorMsg = errors.stream()
                         .map(ValidationMessage::getMessage)
                         .collect(Collectors.joining("; "));
-                throw new AiResultValidationException(schemaKey, errorMsg);
+                throw new AiResultValidationException(ref, errorMsg);
             }
 
             double confidence = jsonNode.get("confidence").asDouble();
             if (confidence < 0 || confidence > 1) {
-                throw new AiResultValidationException(schemaKey, "Confidence out of range");
+                throw new AiResultValidationException(ref, "Confidence out of range");
             }
         } catch (AiResultValidationException e) {
             throw e;
         } catch (Exception e) {
-            throw new AiResultValidationException(schemaKey, "Internal validation error", e);
+            throw new AiResultValidationException(ref, "Internal validation error", e);
         }
     }
 }

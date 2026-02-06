@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.pulitko.aiprocessingservice.ai.AiClient;
-import org.pulitko.aiprocessingservice.kafka.KafkaOutgoingPublisher;
-import org.pulitko.aiprocessingservice.model.AiResult;
+import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
+import org.pulitko.aiprocessingservice.model.ProcessedResult;
 import org.pulitko.aiprocessingservice.model.IncomingMessage;
-import org.pulitko.aiprocessingservice.prompt.Prompt;
+import org.pulitko.aiprocessingservice.model.Prompt;
 import org.pulitko.aiprocessingservice.usecases.validation.AiResultValidator;
 import org.pulitko.aiprocessingservice.usecases.validation.IncomingMessageValidator;
 import org.springframework.scheduling.annotation.Async;
@@ -23,25 +23,26 @@ public class AiProcessingService {
     private final IncomingMessageValidator incomingMessageValidator;
     private final AiResultValidator aiResultValidator;
     private final PromptService promptService;
-    private final KafkaOutgoingPublisher kafkaOutgoingPublisher;
+    private final PromptGenerator promptGenerator;
     private final ObjectMapper objectMapper;
 
-    @Async("aiExecutor")
-    public void process(IncomingMessage message, String sourceId) {
+//    @Async("aiExecutor")
+    public ProcessedResult process(IncomingMessage message) {
         if (message == null) {
             log.debug("Incoming message is null");
         }
+        String ref = message.ref();
         incomingMessageValidator.validate(message);
-        Prompt prompt = promptService.getByRef(message.ref());
-        String aiResultAsString = aiClient.analyze(prompt.template());
-        aiResultValidator.validate(aiResultAsString, prompt.schemaJson(), prompt.ref());
-        AiResult aiResult = null;
+        Prompt prompt = promptService.getByRef(ref);
+        String promptForAnalyze = promptGenerator.generate(prompt.template(), message.payload());
+        String aiResultAsString = aiClient.analyze(promptForAnalyze);
+        aiResultValidator.validate(aiResultAsString, prompt.schemaJson(), ref);
+        ProcessedResult processedResult = null;
         try {
-            aiResult = objectMapper.readValue(aiResultAsString, AiResult.class);
+            processedResult = objectMapper.readValue(aiResultAsString, ProcessedResult.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new AiResultValidationException(ref, "Malformed JSON from AI", e);
         }
-
-        kafkaOutgoingPublisher.send(aiResult, sourceId);
+        return processedResult;
     }
 }

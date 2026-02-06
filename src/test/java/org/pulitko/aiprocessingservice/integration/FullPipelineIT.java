@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.awaitility.Awaitility;
 import org.json.JSONException;
 import org.junit.jupiter.api.*;
 import org.pulitko.aiprocessingservice.ai.AiClient;
@@ -28,7 +30,9 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -54,6 +58,9 @@ class FullPipelineIT extends AbstractDbIT {
 
     @Value("${spring.kafka.topics.outgoing}")
     private String outgoingTopic;
+
+    @Value("${spring.kafka.topics.dlq}")
+    private String autoDlq;
 
     @Autowired
     private EmbeddedKafkaBroker embeddedKafka;
@@ -89,11 +96,11 @@ class FullPipelineIT extends AbstractDbIT {
     }
 
     @Test
-    void shouldLoadPromptFromDbAndPublishResult() throws JSONException, JsonProcessingException {
+    void shouldLoadPromptFromDbAndPublishResult() throws JSONException, JsonProcessingException, InterruptedException {
         String sourceId = SOURCE_ID_JAVACANDIDATE;
         IncomingMessage incomingMessage = INCOMING_MESSAGE;
         String aiResponse = TestData.SUCCESS_AI_RESULT;
-
+        testConsumer.subscribe(Collections.singleton(outgoingTopic));
         when(aiClient.analyze(anyString())).thenReturn(aiResponse);
 
         ProducerRecord<String, Object> record = new ProducerRecord<>(incomingTopic, incomingMessage);
@@ -102,12 +109,24 @@ class FullPipelineIT extends AbstractDbIT {
 
         kafkaTemplate.send(record);
         kafkaTemplate.flush();
-        ConsumerRecord<String, String> received = KafkaTestUtils.getSingleRecord(
-                testConsumer, outgoingTopic, Duration.ofSeconds(10));
+        AtomicReference<ConsumerRecord<String, String>> receivedRef = new AtomicReference<>();
 
-//        assertThat(received.value()).isEqualTo(aiResponse);
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(15))
+                .until(() -> {
+                    ConsumerRecords<String, String> records = KafkaTestUtils.getRecords(testConsumer, Duration.ofSeconds(1));
+                    if (!records.isEmpty()) {
+                        receivedRef.set(records.iterator().next());
+                        return true;
+                    }
+                    return false;
+                });
+
+        ConsumerRecord<String, String> received = receivedRef.get();
+        assertThat(received).isNotNull();
 
         JSONAssert.assertEquals(aiResponse, received.value(), true);
+        assertThat(received.key()).isEqualTo(sourceId);
 
         Header sourceHeader = received.headers().lastHeader("x-sourceId");
         assertThat(sourceHeader).isNotNull();

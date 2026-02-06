@@ -5,7 +5,7 @@ import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AiResultValidatorTest {
+class ProcessedResultValidatorTest {
     private final AiResultValidator validator = new AiResultValidator();
 
     private final String schemaJson = """

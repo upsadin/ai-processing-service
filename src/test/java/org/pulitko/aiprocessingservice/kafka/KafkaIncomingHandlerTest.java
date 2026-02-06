@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.pulitko.aiprocessingservice.config.KafkaConfig;
 import org.pulitko.aiprocessingservice.model.IncomingMessage;
 import org.pulitko.aiprocessingservice.service.AiProcessingService;
+import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
 import org.pulitko.aiprocessingservice.util.TestData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -44,6 +45,9 @@ class KafkaIncomingHandlerTest {
     @MockBean
     private AiProcessingService service;
 
+    @MockBean
+    private DeserializationErrorService deserializationErrorService;
+
     @Test
     void shouldForwardMessageToService() throws Exception {
         IncomingMessage msg = TestData.INCOMING_MESSAGE;
@@ -57,7 +61,7 @@ class KafkaIncomingHandlerTest {
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
                 verify(service)
-                        .process(eq(msg), eq("1"))
+                        .process(eq(msg))
         );
     }
 

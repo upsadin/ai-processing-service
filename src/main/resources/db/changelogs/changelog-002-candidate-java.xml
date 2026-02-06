@@ -6,7 +6,7 @@
        http://www.liquibase.org/xml/ns/dbchangelog
        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <changeSet id="changelog-002-candidate-java" author="p.ulitko">
+    <changeSet id="2" author="p.ulitko">
 
         <insert tableName="ai_prompt">
             <column name="ref" value="candidate_java"/>
