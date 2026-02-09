@@ -25,8 +25,19 @@ class ProcessedResultValidatorTest {
         String validJson = "{\"name\": \"Ivan\", \"confidence\": 0.85}";
 
         assertDoesNotThrow(() ->
-                validator.validate(validJson, schemaJson, "test-key")
+                validator.cleanAndValidate(validJson, schemaJson, "test-key")
         );
+    }
+
+    @Test
+    void shouldCleanAndValidateSuccessfully() {
+        String validJson = "Вот ваш json {\"name\": \"Ivan\", \"confidence\": 0.85} ";
+
+        assertDoesNotThrow(() ->
+                validator.cleanAndValidate(validJson, schemaJson, "test-key")
+        );
+        assertEquals((validator.cleanAndValidate(validJson, schemaJson, "test-key")),
+                "{\"name\": \"Ivan\", \"confidence\": 0.85}");
     }
 
     @Test
@@ -35,10 +46,9 @@ class ProcessedResultValidatorTest {
 
         AiResultValidationException exception = assertThrows(
                 AiResultValidationException.class,
-                () -> validator.validate(invalidJson, schemaJson, "test-key")
+                () -> validator.cleanAndValidate(invalidJson, schemaJson, "test-key")
         );
 
-        // Проверяем, что в сообщении есть упоминание о пропущенном поле
         String message = exception.getMessage();
         assertTrue(message.contains("$.name"));
     }
@@ -49,19 +59,20 @@ class ProcessedResultValidatorTest {
 
         AiResultValidationException exception = assertThrows(
                 AiResultValidationException.class,
-                () -> validator.validate(highConfidenceJson, schemaJson, "test-key")
+                () -> validator.cleanAndValidate(highConfidenceJson, schemaJson, "test-key")
         );
 
         assertTrue(exception.getMessage().contains("Confidence out of range"));
     }
 
+
     @Test
     void shouldThrowExceptionOnMalformedJson() {
-        String malformedJson = "{ \"name\": \"Ivan\", "; // Оборванный JSON
+        String malformedJson = "{ \"name\": \"Ivan\", ";
 
         AiResultValidationException exception = assertThrows(
                 AiResultValidationException.class,
-                () -> validator.validate(malformedJson, schemaJson, "test-key")
+                () -> validator.cleanAndValidate(malformedJson, schemaJson, "test-key")
         );
 
         assertTrue(exception.getMessage().contains("Internal validation error"));

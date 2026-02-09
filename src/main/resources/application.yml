@@ -5,6 +5,7 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ai_pipeline}
     username: ${SPRING_DATASOURCE_USERNAME:ai_user}
     password: ${SPRING_DATASOURCE_PASSWORD:ai_pass}
+    driver-class-name: org.postgresql.Driver
   liquibase:
       change-log: classpath:db/changelog.xml
       enabled: true
@@ -23,3 +24,8 @@ spring:
       consumer: ai-processing
       dlq: ai-processing-dlq
 
+ai:
+  api:
+    key: ${OPENAI_API_KEY:not_set}
+    base-url: https://api.openai.com/v1/chat/completions
+    model-name: gpt-4.1-nano

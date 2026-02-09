@@ -7,8 +7,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ProcessedResult(
         boolean matches,
-        double confidence,
+        Double confidence,
         String reason,
         @JsonProperty("full_name") String fullName,
         Contacts contacts
-) {}
+) {
+    public ProcessedResult {
+        if (confidence == null) confidence = 0.0;
+        if (reason == null) reason = "No reason provided";
+    }
+}

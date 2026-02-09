@@ -6,16 +6,16 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class AiResultValidator {
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -24,12 +24,14 @@ public class AiResultValidator {
 
     private final Map<String, JsonSchema> schemaCache = new ConcurrentHashMap<>();
 
-    public void validate(String aiResultJson, String schemaJson, String ref) {
+    public String cleanAndValidate(String rawResponse, String schemaJson, String ref) {
+        String cleanJson = cleanJson(rawResponse);
         try {
-            JsonNode jsonNode = objectMapper.readTree(aiResultJson);
+            JsonNode jsonNode = objectMapper.readTree(cleanJson);
             JsonSchema schema = schemaCache.computeIfAbsent(ref, k -> schemaFactory.getSchema(schemaJson));
             Set<ValidationMessage> errors = schema.validate(jsonNode);
             if (!errors.isEmpty()) {
+                log.error("Schema validation failed for ref {}: {}", ref, errors);
                 String errorMsg = errors.stream()
                         .map(ValidationMessage::getMessage)
                         .collect(Collectors.joining("; "));
@@ -45,5 +47,17 @@ public class AiResultValidator {
         } catch (Exception e) {
             throw new AiResultValidationException(ref, "Internal validation error", e);
         }
+        return cleanJson;
+    }
+
+    private String cleanJson(String text) {
+        if (text == null) return "";
+        int start = text.indexOf('{');
+        int end = text.lastIndexOf('}');
+
+        if (start != -1 && end != -1 && end > start) {
+            return text.substring(start, end + 1);
+        }
+        return text.trim();
     }
 }

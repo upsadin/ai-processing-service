@@ -40,9 +40,6 @@
     "telegram": string | null
   }
 }
-
-Текст резюме:
-{{payload}}
 ]]>
             </column>
             <column name="schema_json">

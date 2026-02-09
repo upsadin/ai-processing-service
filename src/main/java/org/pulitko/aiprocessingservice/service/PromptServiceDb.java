@@ -27,7 +27,7 @@ public class PromptServiceDb implements PromptService {
     public Prompt getByRef(String ref) {
         log.info("Searching prompt for ref: {}", ref);
         PromptEntity entity = promptRepository.findByRefAndActiveTrue(ref)
-                .orElseThrow(() -> new PromptNotFoundException("Prompt not found for ref" + ref));
+                .orElseThrow(() -> new PromptNotFoundException("Prompt not found for ref " + ref));
 
         return mapToDomain(entity);
     }

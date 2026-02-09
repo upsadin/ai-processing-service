@@ -12,10 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@KafkaListener(
-        topics = "${spring.kafka.topics.processing-dlq}",
-        groupId = "${spring.kafka.groups-id.dlq}"
-)
+
 @Slf4j
 @Component
 public class DlqListener {
@@ -25,8 +22,14 @@ public class DlqListener {
             groupId = "${spring.kafka.groups-id.dlq}-business"
     )
     public void handleBusinessError(@Payload IncomingMessage message,
-                                    @Header("x-sourceId") String sourceId) {
-        log.warn("Manual fix needed for ref: {} from source: {}", message.ref(), sourceId);
+                                    @Header(name = "x-sourceId", required = false) String sourceId,
+                                    @Header(name = "x-reason", required = false) String reason) {
+        if (message == null) {
+            log.error("DLQ received NULL payload! Check serialization.");
+            return;
+        }
+        log.warn("Manual fix needed for source={}, reason={}, ref={}",
+                sourceId, reason, message.ref());
     }
 
     @KafkaListener(

@@ -26,7 +26,17 @@ public class TestData {
     );
 
     public static final String TEMPLATE_JAVACANDIDATE = "Promt for java candidate";
-    public static final String SCHEMA_JAVACANDIDATE = "java candidate CV";
+    public static final String SCHEMA_JAVACANDIDATE = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "full_name": { "type": "string" },
+            "confidence": { "type": "number" }
+          },
+          "required": ["full_name", "confidence"]
+        }
+        """;
 
     public static final Prompt PROMPT = new Prompt(REF_JAVACANDIDATE, TEMPLATE_JAVACANDIDATE, SCHEMA_JAVACANDIDATE);
 
@@ -47,7 +57,7 @@ public class TestData {
                       "reason": "Кандидат соответствует всем критериям: имеет коммерческий опыт на Java от 2 лет и опыт работы с PostgreSQL.",
                       "full_name": "Иван Иванов",
                       "contacts": {
-                        "email": "еуые@mail.ru",
+                        "email": "test@mail.ru",
                         "phone": "+77777777777",
                         "linkedin": "https://www.linkedin.com/in/test",
                         "telegram": "https://t.me/test"
@@ -56,6 +66,6 @@ public class TestData {
                             """;
 
     public static final ProcessedResult SUCCESS_PROCESSED_RESULT =
-            new ProcessedResult(true, 0.9f, "Reason", "Иван Иванов",
+            new ProcessedResult(true, 0.9d, "Reason", "Иван Иванов",
                     new Contacts("email", "phone", "linkedin", "telegram"));
 }

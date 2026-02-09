@@ -1,0 +1,10 @@
+### Отправка сообщения в Кафку
+KAFKA kafka://localhost:9092
+Topic: ai.processing.raw
+Content-Type: application/json
+
+{
+  "type": "txt",
+  "ref": "candidate_java_001",
+  "payload": "Иван Иванов, Java Developer. Опыт с Spring Boot и Postgres 2.5 года"
+}

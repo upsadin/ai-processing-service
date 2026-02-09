@@ -14,7 +14,6 @@ import org.pulitko.aiprocessingservice.config.KafkaConfig;
 import org.pulitko.aiprocessingservice.model.IncomingMessage;
 import org.pulitko.aiprocessingservice.model.Prompt;
 import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
-import org.pulitko.aiprocessingservice.service.PromptGenerator;
 import org.pulitko.aiprocessingservice.service.AiProcessingService;
 import org.pulitko.aiprocessingservice.service.PromptService;
 import org.pulitko.aiprocessingservice.usecases.validation.AiResultValidator;
@@ -72,9 +71,6 @@ class KafkaOutgoingPublisherTest {
     private PromptService promptService;
 
     @MockBean
-    private PromptGenerator promptGenerator;
-
-    @MockBean
     private IncomingMessageValidator incomingMessageValidator;
 
     @MockBean
@@ -121,9 +117,8 @@ class KafkaOutgoingPublisherTest {
 
         doNothing().when(incomingMessageValidator).validate(msg);
         when(promptService.getByRef(any())).thenReturn(prompt);
-        when(promptGenerator.generate(any(), any())).thenReturn(TestData.PROMPT_FOR_AI);
-        when(aiClient.analyze(any())).thenReturn(aiResult);
-        doNothing().when(aiResultValidator).validate(any(),any(),any());
+        when(aiClient.analyze(any(), any())).thenReturn(aiResult);
+        when(aiResultValidator.cleanAndValidate(any(),any(),any())).thenReturn(aiResult);
 
         kafkaTemplate.send(record);
 

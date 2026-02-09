@@ -101,7 +101,7 @@ class FullPipelineIT extends AbstractDbIT {
         IncomingMessage incomingMessage = INCOMING_MESSAGE;
         String aiResponse = TestData.SUCCESS_AI_RESULT;
         testConsumer.subscribe(Collections.singleton(outgoingTopic));
-        when(aiClient.analyze(anyString())).thenReturn(aiResponse);
+        when(aiClient.analyze(anyString(),anyString())).thenReturn(aiResponse);
 
         ProducerRecord<String, Object> record = new ProducerRecord<>(incomingTopic, incomingMessage);
         record.headers().add("x-sourceId",sourceId.getBytes(StandardCharsets.UTF_8));

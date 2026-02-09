@@ -109,31 +109,38 @@ public class KafkaConfig {
 
             private void processError(Exception ex, ConsumerRecord<?, ?> record) {
                 if (record == null) return;
-
                 DeserializationException derEx = findDeserializationException(ex);
-                String rawPayload;
-                String errorMessage = ex.getMessage();
+                boolean isConvEx = isConversionException(ex);
 
-                if (derEx != null) {
-                    log.error("!!! DETECTED Deserialization Error");
-                    rawPayload = (derEx.getData() != null)
-                            ? new String(derEx.getData(), StandardCharsets.UTF_8)
-                            : "unknown_payload";
-                } else if (isConversionException(ex)) { // Вынес в отдельный метод для чистоты
-                    log.error("!!! DETECTED Conversion Error");
-                    rawPayload = record.value() != null ? record.value().toString() : "null_payload";
-                    errorMessage = "Mapping error: " + (ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
-                } else {
-                    // Если мы здесь, значит это не десериализация, но мы ВСЕ РАВНО хотим это сохранить
-                    log.warn("!!! Processing Generic/Unknown Error for DB save");
-                    rawPayload = record.value() != null ? record.value().toString() : "null_payload";
+                if (derEx == null && !isConvEx) {
+                    log.info("CommonErrorHandler: Business or Runtime exception detected ({}). " +
+                            "Skipping DB persistence as it's not a deserialization issue.", ex.getClass().getSimpleName());
+                    return;
                 }
 
-                log.info("Saving error to DB: payload={}, message={}", rawPayload, errorMessage);
-                errorService.saveError(rawPayload, errorMessage, record.topic());
+                String rawPayload;
+                String errorMessage;
+
+                if (derEx != null) {
+                    log.error("!!! DETECTED Deserialization Error in topic: {}", record.topic());
+                    rawPayload = (derEx.getData() != null)
+                            ? new String(derEx.getData(), StandardCharsets.UTF_8)
+                            : "unknown_payload_bytes";
+                    errorMessage = "Deserialization failed: " + ex.getMessage();
+                } else {
+                    log.error("!!! DETECTED Conversion Error in topic: {}", record.topic());
+                    rawPayload = record.value() != null ? record.value().toString() : "null_payload";
+                    errorMessage = "Mapping/Conversion error: " + (ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+                }
+
+                log.info("Saving corrupted message to DB: payload={}, error={}", rawPayload, errorMessage);
+                try {
+                    errorService.saveError(rawPayload, errorMessage, record.topic());
+                } catch (Exception dbEx) {
+                    log.error("!!! FATAL: Could not save error to DB", dbEx);
+                }
             }
 
-            // Добавь этот вспомогательный метод, чтобы ловить оба типа ошибок конвертации
             private boolean isConversionException(Throwable ex) {
                 Throwable cause = ex;
                 while (cause != null) {

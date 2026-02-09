@@ -35,8 +35,6 @@ class AiProcessingServiceApplicationTests {
     @Mock
     private PromptService promptService;
     @Mock
-    private PromptGenerator promptGenerator;
-    @Mock
     private AiResultValidator aiResultValidator;
     @Mock
     private IncomingMessageValidator incomingMessageValidator;;
@@ -57,8 +55,8 @@ class AiProcessingServiceApplicationTests {
         Prompt prompt = TestData.PROMPT;
 
         when(promptService.getByRef(msg.ref())).thenReturn(prompt);
-        when(promptGenerator.generate(any(), any())).thenReturn(TestData.PROMPT_FOR_AI);
-        when(aiClient.analyze(any())).thenReturn(SUCCESS_AI_RESULT);
+        when(aiClient.analyze(any(), any())).thenReturn(SUCCESS_AI_RESULT);
+        when(aiResultValidator.cleanAndValidate(anyString(),anyString(),anyString())).thenReturn(SUCCESS_AI_RESULT);
 
         ProcessedResult actualResult = service.process(msg);
 
@@ -73,10 +71,9 @@ class AiProcessingServiceApplicationTests {
         IncomingMessage msg = INCOMING_MESSAGE;
         Prompt prompt = TestData.PROMPT;
         when(promptService.getByRef(msg.ref())).thenReturn(prompt);
-        when(promptGenerator.generate(any(), any())).thenReturn(TestData.PROMPT_FOR_AI);
-        when(aiClient.analyze(any())).thenReturn(SUCCESS_AI_RESULT);
+        when(aiClient.analyze(any(),any())).thenReturn(SUCCESS_AI_RESULT);
         doThrow(new AiResultValidationException(REF_JAVACANDIDATE, "Confidence out of range"))
-                .when(aiResultValidator).validate(anyString(), anyString(), anyString());
+                .when(aiResultValidator).cleanAndValidate(anyString(), anyString(), anyString());
 
         assertThrows(AiResultValidationException.class, () -> {
             service.process(msg);
@@ -98,8 +95,8 @@ class AiProcessingServiceApplicationTests {
             service.process(msg);
         });
         verify(promptService, never()).getByRef(any());
-        verify(aiClient, never()).analyze(any());
-        verify(aiResultValidator, never()).validate(any(),any(),any());
+        verify(aiClient, never()).analyze(any(), any());
+        verify(aiResultValidator, never()).cleanAndValidate(any(),any(),any());
         verify(kafkaOutgoingPublisher, never()).send(any(),any());
     }
 
@@ -109,14 +106,14 @@ class AiProcessingServiceApplicationTests {
         Prompt prompt = TestData.PROMPT;
 
         doNothing().when(incomingMessageValidator).validate(msg);
-        doThrow(new PromptNotFoundException("Prompt not found for ref=" + INCOMING_MESSAGE.ref())).
+        doThrow(new PromptNotFoundException("Prompt not found for ref= " + INCOMING_MESSAGE.ref())).
                 when(promptService).getByRef(msg.ref());
 
         assertThrows(PromptNotFoundException.class, () -> {
             service.process(msg);
         });
-        verify(aiClient, never()).analyze(any());
-        verify(aiResultValidator, never()).validate(any(),any(),any());
+        verify(aiClient, never()).analyze(any(),any());
+        verify(aiResultValidator, never()).cleanAndValidate(any(),any(),any());
         verify(kafkaOutgoingPublisher, never()).send(any(),any());
     }
 

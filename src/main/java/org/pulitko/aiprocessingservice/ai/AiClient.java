@@ -4,5 +4,5 @@ import org.springframework.stereotype.Component;
 
 @Component
 public interface AiClient {
-    String analyze(String prompt);
+    String analyze(String systemInstruction, String userContent);
 }

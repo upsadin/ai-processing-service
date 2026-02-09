@@ -12,7 +12,6 @@ public record DeserializationErrorEntity(
         String topic,
         LocalDateTime createdAt
 ) {
-    // Статический метод для удобного создания
     public static DeserializationErrorEntity of(String payload, String errorMessage, String topic) {
         return new DeserializationErrorEntity(null, payload, errorMessage, topic, LocalDateTime.now());
     }

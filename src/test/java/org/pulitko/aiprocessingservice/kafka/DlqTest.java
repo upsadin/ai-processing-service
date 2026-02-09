@@ -3,6 +3,7 @@ package org.pulitko.aiprocessingservice.kafka;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
+import org.pulitko.aiprocessingservice.ai.client.OpenAiClient;
 import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
 import org.pulitko.aiprocessingservice.exception.PromptNotFoundException;
 import org.pulitko.aiprocessingservice.model.IncomingMessage;
@@ -54,6 +55,7 @@ class DlqTest {
     @MockBean private PromptRepository promptRepository;
     @MockBean private PromptServiceDb promptServiceDb;
     @MockBean private AiProcessingService aiProcessingService;
+    @MockBean private OpenAiClient aiClient;
 
     @Value("${spring.kafka.topics.processing-dlq}")
     private String businessDlq;
@@ -90,8 +92,10 @@ class DlqTest {
                 .untilAsserted(() -> {
                     ArgumentCaptor<IncomingMessage> messageCaptor = ArgumentCaptor.forClass(IncomingMessage.class);
                     ArgumentCaptor<String> sourceIdCaptor = ArgumentCaptor.forClass(String.class);
+                    ArgumentCaptor<String> reasonCaptor = ArgumentCaptor.forClass(String.class);
                     verify(dlqListener, atLeastOnce()).handleBusinessError(messageCaptor.capture(),
-                            sourceIdCaptor.capture());IncomingMessage capturedMessage = messageCaptor.getValue();
+                            sourceIdCaptor.capture(), reasonCaptor.capture());
+                    IncomingMessage capturedMessage = messageCaptor.getValue();
                     String capturedSourceId = sourceIdCaptor.getValue();
 
                     assertEquals(REF_JAVACANDIDATE, capturedMessage.ref());
