@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.pulitko.aiprocessingservice.exception.IncomingMessageValidationException;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.util.TestData;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;

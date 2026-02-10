@@ -13,7 +13,7 @@ import org.awaitility.Awaitility;
 import org.json.JSONException;
 import org.junit.jupiter.api.*;
 import org.pulitko.aiprocessingservice.ai.AiClient;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.util.AbstractDbIT;
 import org.pulitko.aiprocessingservice.util.TestData;
 import org.skyscreamer.jsonassert.JSONAssert;

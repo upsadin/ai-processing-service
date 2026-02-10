@@ -3,7 +3,7 @@ package org.pulitko.aiprocessingservice.kafka;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Test;
 import org.pulitko.aiprocessingservice.config.KafkaConfig;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.service.AiProcessingService;
 import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
 import org.pulitko.aiprocessingservice.util.TestData;

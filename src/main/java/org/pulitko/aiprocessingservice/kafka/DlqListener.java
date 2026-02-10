@@ -2,15 +2,11 @@ package org.pulitko.aiprocessingservice.kafka;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
-import org.springframework.kafka.annotation.KafkaHandler;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 
 @Slf4j

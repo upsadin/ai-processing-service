@@ -6,7 +6,7 @@ import org.mockito.ArgumentCaptor;
 import org.pulitko.aiprocessingservice.ai.client.OpenAiClient;
 import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
 import org.pulitko.aiprocessingservice.exception.PromptNotFoundException;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.repository.DeserializationErrorRepository;
 import org.pulitko.aiprocessingservice.repository.PromptRepository;
 import org.pulitko.aiprocessingservice.service.AiProcessingService;

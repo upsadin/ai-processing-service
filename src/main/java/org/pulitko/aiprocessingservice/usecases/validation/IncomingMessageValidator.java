@@ -5,7 +5,7 @@ import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.pulitko.aiprocessingservice.exception.IncomingMessageValidationException;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;

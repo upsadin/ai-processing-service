@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.pulitko.aiprocessingservice.ai.AiClient;
 import org.pulitko.aiprocessingservice.config.AppConfig;
 import org.pulitko.aiprocessingservice.config.KafkaConfig;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.model.Prompt;
 import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
 import org.pulitko.aiprocessingservice.service.AiProcessingService;

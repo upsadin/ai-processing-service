@@ -6,6 +6,7 @@ import org.pulitko.aiprocessingservice.ai.AiClient;
 import org.pulitko.aiprocessingservice.ai.dto.AiMessage;
 import org.pulitko.aiprocessingservice.ai.dto.AiRequest;
 import org.pulitko.aiprocessingservice.ai.dto.AiResponse;
+import org.pulitko.aiprocessingservice.exception.AiRetryableException;
 import org.pulitko.aiprocessingservice.exception.AiServiceException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -13,7 +14,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
 
 @Slf4j
@@ -61,7 +64,19 @@ public class OpenAiClient implements AiClient {
         AiResponse response = webClient.post()
                 .bodyValue(request)
                 .retrieve()
+                .onStatus(status -> status.value() == 429 || status.is5xxServerError(), resp ->
+                        resp.bodyToMono(String.class).map(body ->
+                                new AiRetryableException("AI API temporary unavailable: " + body, null))
+                )
+                .onStatus(status -> status.isError(), resp ->
+                        resp.bodyToMono(String.class).map(body ->
+                                new RuntimeException("Fatal AI Error: " + body))
+                )
                 .bodyToMono(AiResponse.class)
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(2))
+                        .filter(throwable -> throwable instanceof AiRetryableException)
+                        .onRetryExhaustedThrow((spec, signal) -> signal.failure()) // Пробрасываем ошибку дальше, если попытки кончились
+                )
                 .block();
         if (response != null && response.usage() != null) {
             AiResponse.Usage usage = response.usage();

@@ -6,12 +6,13 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
+import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
+import org.pulitko.aiprocessingservice.exception.AiRetryableException;
 import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -24,18 +25,19 @@ import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.listener.MessageListenerContainer;
-import org.springframework.kafka.support.converter.JsonMessageConverter;
-import org.springframework.kafka.support.converter.RecordMessageConverter;
 import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.RejectedExecutionException;
 
 @Slf4j
 @Configuration
@@ -83,7 +85,7 @@ public class KafkaConfig {
         var recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
                 (record, ex) -> new TopicPartition(dlqTopic, -1));
         var backOff = new FixedBackOff(2000L, 3);
-        return new DefaultErrorHandler(recoverer, backOff) {
+        var errorHandler = new DefaultErrorHandler(recoverer, backOff) {
             @Override
             public boolean handleOne(Exception thrownException, ConsumerRecord<?, ?> record,
                                      Consumer<?, ?> consumer, MessageListenerContainer container) {
@@ -170,6 +172,18 @@ public class KafkaConfig {
                 return null;
             }
         };
+        errorHandler.addNotRetryableExceptions(
+                AiResultValidationException.class,
+                DeserializationException.class,
+                MessageConversionException.class
+        );
+
+        errorHandler.addRetryableExceptions(
+                AiRetryableException.class,
+                ResourceAccessException.class,
+                RejectedExecutionException.class
+        );
+        return errorHandler;
     }
 
     @Bean

@@ -1,4 +1,4 @@
-package org.pulitko.aiprocessingservice.model;
+package org.pulitko.aiprocessingservice.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

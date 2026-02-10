@@ -7,12 +7,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.pulitko.aiprocessingservice.ai.AiClient;
 import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
-import org.pulitko.aiprocessingservice.model.ProcessedResult;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
+import org.pulitko.aiprocessingservice.dto.ProcessedResult;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.model.Prompt;
 import org.pulitko.aiprocessingservice.usecases.validation.AiResultValidator;
 import org.pulitko.aiprocessingservice.usecases.validation.IncomingMessageValidator;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service

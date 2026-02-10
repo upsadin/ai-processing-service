@@ -1,7 +1,7 @@
 package org.pulitko.aiprocessingservice.exception;
 
 import jakarta.validation.ConstraintViolation;
-import org.pulitko.aiprocessingservice.model.IncomingMessage;
+import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 
 import java.util.Set;
 

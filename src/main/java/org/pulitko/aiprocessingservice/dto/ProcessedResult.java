@@ -1,4 +1,4 @@
-package org.pulitko.aiprocessingservice.model;
+package org.pulitko.aiprocessingservice.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
