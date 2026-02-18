@@ -10,10 +10,14 @@ public class TestData {
     public static final String SOURCE_ID_JAVACANDIDATE = "src-1";
 
     public static final String REF_JAVACANDIDATE = "candidate_java";
+    public static final String INVALID_REF_JAVACANDIDATE = "ref-1";
     public static final String TYPE_JAVACANDIDATE = "txt";
     public static final String PAYLOAD_JAVACANDIDATE = "java candidate CV, 2 years experience, knows Postgres";
     public static final IncomingMessage INCOMING_MESSAGE = new IncomingMessage(
             TYPE_JAVACANDIDATE, REF_JAVACANDIDATE, PAYLOAD_JAVACANDIDATE
+    );
+    public static final IncomingMessage INCOMING_MESSAGE_WITH_WRONG_REF = new IncomingMessage(
+            TYPE_JAVACANDIDATE, INVALID_REF_JAVACANDIDATE, PAYLOAD_JAVACANDIDATE
     );
     public static final IncomingMessage INCOMING_MESSAGE_WITH_NULL_REF = new IncomingMessage(
             TYPE_JAVACANDIDATE, null, PAYLOAD_JAVACANDIDATE

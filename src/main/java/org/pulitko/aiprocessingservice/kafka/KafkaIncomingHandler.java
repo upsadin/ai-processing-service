@@ -10,8 +10,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 import java.util.concurrent.RejectedExecutionException;
 
 
@@ -28,30 +28,28 @@ public class KafkaIncomingHandler {
             groupId = "${spring.kafka.groups-id.consumer}",
             containerFactory = "kafkaListenerContainerFactory")
     public void handle(@Payload IncomingMessage message,
-                       @Header(name = "x-sourceId", required = false) String sourceId) {
-        final String activeSourceId = (sourceId != null && !sourceId.isBlank())
-                ? sourceId
-                : "gen-" + UUID.randomUUID().toString().substring(0, 8);
+                       @Header("x-sourceId") String sourceId) {
 
-        if (message == null) {
-            log.warn("Payload is null, check for deserialization errors in headers.");
+        if (message == null || message.payload().isBlank()) {
+            log.warn("Payload is null or empty, check for errors in headers.");
             return;
         }
-        log.info("Received event id:{}, ref: {}", activeSourceId, message.ref());
+        log.info("Received event id:{}, ref: {}", sourceId, message.ref());
+
         try {
             ProcessedResult processedResult = aiProcessingService.process(message);
-            kafkaOutgoingPublisher.send(processedResult, activeSourceId);
+            kafkaOutgoingPublisher.send(processedResult, sourceId);
         } catch (BaseBusinessException e) {
             if (e.getSourceId() == null) {
-                e.withSourceId(activeSourceId);
+                e.withSourceId(sourceId);
             }
-            log.warn("Business logic error, sourceId={}", activeSourceId, e);
-            dlqPublisher.publish(message, activeSourceId, e.getMessage());
+            log.warn("Business logic error, sourceId={}", sourceId, e);
+            dlqPublisher.publish(message, sourceId, e.getMessage());
         } catch (RejectedExecutionException e) {
-            log.error("The system is overloaded and cannot process it now: {}", activeSourceId);
+            log.error("The system is overloaded and cannot process it now: {}", sourceId);
             throw e;
         } catch (Exception e) {
-            log.error("CRITICAL: Unexpected error during AI processing for sourceId={}", activeSourceId, e);
+            log.error("CRITICAL: Unexpected error during AI processing for sourceId={}", sourceId, e);
             throw e;
         }
     }

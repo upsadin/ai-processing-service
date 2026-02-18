@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.pulitko.aiprocessingservice.model.DeserializationErrorEntity;
 import org.pulitko.aiprocessingservice.repository.DeserializationErrorRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,9 @@ public class DeserializationErrorService {
 
     private final DeserializationErrorRepository repository;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW,
+            transactionManager = "jdbcTransactionManager")
     public void saveError(String payload, String exceptionMessage, String topic) {
         try {
             var error = DeserializationErrorEntity.of(payload, exceptionMessage, topic);

@@ -28,14 +28,6 @@ public class DlqListener {
                 sourceId, reason, message.ref());
     }
 
-    @KafkaListener(
-            topics = "${spring.kafka.topics.dlq}",
-            groupId = "${spring.kafka.groups-id.dlq}-system"
-    )
-    public void handleSystemError(ConsumerRecord<Object, Object> record) {
-        log.error("Received something in System DLQ: {}", record.value());
-    }
-
         // TODO:
         // - retry
         // - сохранение в БД

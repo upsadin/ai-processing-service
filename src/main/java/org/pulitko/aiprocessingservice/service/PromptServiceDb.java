@@ -32,12 +32,6 @@ public class PromptServiceDb implements PromptService {
         return mapToDomain(entity);
     }
 
-/*    @Recover
-    public Prompt recover(RuntimeException e, String ref) {
-        log.error("Final attempt failed for ref: {}. Error type: {}", ref, e.getClass().getSimpleName());
-        throw e;
-    }*/
-
     private Prompt mapToDomain(PromptEntity entity) {
         return new Prompt(
                 entity.getRef(),

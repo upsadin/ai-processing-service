@@ -46,8 +46,7 @@ import static org.pulitko.aiprocessingservice.util.TestData.SOURCE_ID_JAVACANDID
         partitions = 1,
         topics = {
                 "${spring.kafka.topics.outgoing}",
-                "${spring.kafka.topics.incoming}",
-                "${spring.kafka.topics.dlq}"
+                "${spring.kafka.topics.incoming}"
         }
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -58,9 +57,6 @@ class FullPipelineIT extends AbstractDbIT {
 
     @Value("${spring.kafka.topics.outgoing}")
     private String outgoingTopic;
-
-    @Value("${spring.kafka.topics.dlq}")
-    private String autoDlq;
 
     @Autowired
     private EmbeddedKafkaBroker embeddedKafka;
