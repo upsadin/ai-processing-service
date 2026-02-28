@@ -1,5 +1,6 @@
 package org.pulitko.aiprocessingservice.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import jakarta.validation.ConstraintViolation;
@@ -14,7 +15,6 @@ import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
 import org.pulitko.aiprocessingservice.exception.IncomingMessageValidationException;
 import org.pulitko.aiprocessingservice.exception.PromptNotFoundException;
 import org.pulitko.aiprocessingservice.kafka.KafkaOutgoingPublisher;
-import org.pulitko.aiprocessingservice.dto.ProcessedResult;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.model.Prompt;
 import org.pulitko.aiprocessingservice.usecases.validation.AiResultValidator;
@@ -55,14 +55,14 @@ class AiProcessingServiceApplicationTests {
         Prompt prompt = TestData.PROMPT;
 
         when(promptService.getByRef(msg.ref())).thenReturn(prompt);
-        when(aiClient.analyze(any(), any())).thenReturn(SUCCESS_AI_RESULT);
-        when(aiResultValidator.cleanAndValidate(anyString(),anyString(),anyString())).thenReturn(SUCCESS_AI_RESULT);
+        when(aiClient.analyze(any(), any(), anyString(),anyString())).thenReturn(SUCCESS_AI_RESULT);
+        when(aiResultValidator.validate(anyString(),anyString(),anyString())).thenReturn(SUCCESS_AI_RESULT);
 
-        ProcessedResult actualResult = service.process(msg);
+        JsonNode actualResult = service.process(msg);
 
         assertThat(actualResult).isNotNull();
-        assertThat(actualResult.fullName()).isEqualTo("Иван Иванов");
-        assertThat(actualResult.matches()).isTrue();
+        assertThat(actualResult.get("full_name").asText()).isEqualTo("Иван Иванов");
+        assertThat(actualResult.get("matches").asBoolean()).isTrue();
 
     }
 
@@ -71,9 +71,9 @@ class AiProcessingServiceApplicationTests {
         IncomingMessage msg = INCOMING_MESSAGE;
         Prompt prompt = TestData.PROMPT;
         when(promptService.getByRef(msg.ref())).thenReturn(prompt);
-        when(aiClient.analyze(any(),any())).thenReturn(SUCCESS_AI_RESULT);
+        when(aiClient.analyze(any(), any(), anyString(),anyString())).thenReturn(SUCCESS_AI_RESULT);
         doThrow(new AiResultValidationException(REF_JAVACANDIDATE, "Confidence out of range"))
-                .when(aiResultValidator).cleanAndValidate(anyString(), anyString(), anyString());
+                .when(aiResultValidator).validate(anyString(), anyString(), anyString());
 
         assertThrows(AiResultValidationException.class, () -> {
             service.process(msg);
@@ -95,9 +95,9 @@ class AiProcessingServiceApplicationTests {
             service.process(msg);
         });
         verify(promptService, never()).getByRef(any());
-        verify(aiClient, never()).analyze(any(), any());
-        verify(aiResultValidator, never()).cleanAndValidate(any(),any(),any());
-        verify(kafkaOutgoingPublisher, never()).send(any(),any());
+        verify(aiClient, never()).analyze(any(), any(), anyString(),anyString());
+        verify(aiResultValidator, never()).validate(any(),any(),any());
+        verify(kafkaOutgoingPublisher, never()).send(any());
     }
 
     @Test
@@ -112,9 +112,9 @@ class AiProcessingServiceApplicationTests {
         assertThrows(PromptNotFoundException.class, () -> {
             service.process(msg);
         });
-        verify(aiClient, never()).analyze(any(),any());
-        verify(aiResultValidator, never()).cleanAndValidate(any(),any(),any());
-        verify(kafkaOutgoingPublisher, never()).send(any(),any());
+        verify(aiClient, never()).analyze(any(), any(), anyString(),anyString());
+        verify(aiResultValidator, never()).validate(any(),any(),any());
+        verify(kafkaOutgoingPublisher, never()).send(any());
     }
 
 

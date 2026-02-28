@@ -48,8 +48,8 @@ public abstract class AbstractDbIT {
     static final KafkaContainer kafka =
             new KafkaContainer(
                     DockerImageName.parse("apache/kafka:3.7.0"))
-                            .withEnv("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1") // Репликация лога = 1
-                            .withEnv("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1")           // Минимум синхронных реплик = 1
+                            .withEnv("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1")
+                            .withEnv("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1")
                             .withEnv("KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR", "1");
 
 

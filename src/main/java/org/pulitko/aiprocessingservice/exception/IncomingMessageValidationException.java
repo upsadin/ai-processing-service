@@ -24,6 +24,6 @@ public class IncomingMessageValidationException extends BaseBusinessException {
 
     @Override
     public String getKey() {
-        return null;
+        return key;
     }
 }

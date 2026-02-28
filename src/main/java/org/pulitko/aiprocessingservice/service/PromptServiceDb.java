@@ -6,6 +6,7 @@ import org.pulitko.aiprocessingservice.exception.PromptNotFoundException;
 import org.pulitko.aiprocessingservice.model.Prompt;
 import org.pulitko.aiprocessingservice.model.PromptEntity;
 import org.pulitko.aiprocessingservice.repository.PromptRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -19,6 +20,7 @@ public class PromptServiceDb implements PromptService {
     private final PromptRepository promptRepository;
 
     @Override
+    @Cacheable(value = "prompts", key = "#ref")
     @Retryable(
             retryFor = { org.springframework.dao.DataAccessException.class },
             maxAttempts = 3,

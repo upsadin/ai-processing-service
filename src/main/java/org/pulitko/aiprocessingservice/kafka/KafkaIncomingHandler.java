@@ -1,16 +1,16 @@
 package org.pulitko.aiprocessingservice.kafka;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.pulitko.aiprocessingservice.dto.OutgoingMessage;
 import org.pulitko.aiprocessingservice.exception.BaseBusinessException;
-import org.pulitko.aiprocessingservice.dto.ProcessedResult;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.service.AiProcessingService;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.RejectedExecutionException;
 
@@ -26,7 +26,8 @@ public class KafkaIncomingHandler {
     @KafkaListener(
             topics = "${spring.kafka.topics.incoming}",
             groupId = "${spring.kafka.groups-id.consumer}",
-            containerFactory = "kafkaListenerContainerFactory")
+            containerFactory = "kafkaListenerContainerFactory",
+            concurrency = "${spring.kafka.consumer.concurrency}")
     public void handle(@Payload IncomingMessage message,
                        @Header("x-sourceId") String sourceId) {
 
@@ -37,8 +38,13 @@ public class KafkaIncomingHandler {
         log.info("Received event id:{}, ref: {}", sourceId, message.ref());
 
         try {
-            ProcessedResult processedResult = aiProcessingService.process(message);
-            kafkaOutgoingPublisher.send(processedResult, sourceId);
+            JsonNode processedResult = aiProcessingService.process(message);
+            OutgoingMessage outgoingMessage = OutgoingMessage.builder()
+                    .withRef(message.ref())
+                    .withSourceId(sourceId)
+                    .withAiResult(processedResult)
+                    .build();
+            kafkaOutgoingPublisher.send(outgoingMessage);
         } catch (BaseBusinessException e) {
             if (e.getSourceId() == null) {
                 e.withSourceId(sourceId);

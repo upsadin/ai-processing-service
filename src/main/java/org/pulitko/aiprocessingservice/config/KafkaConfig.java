@@ -28,6 +28,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Map;
 
 @Slf4j
@@ -43,6 +44,9 @@ public class KafkaConfig {
 
     @Value("${spring.kafka.topics.outgoing}")
     private String publisherTopic;
+
+    @Value("${spring.kafka.topics.processing-dlq}")
+    private String businessDlqTopic;
 
     @Value("${spring.kafka.producer.properties.enable.idempotence}")
     private Boolean idempotence;
@@ -83,9 +87,6 @@ public class KafkaConfig {
     @Bean
     public DefaultAfterRollbackProcessor<Object, Object> afterRollbackProcessor(
             DeserializationErrorService errorService) {
-
-        log.info("!!! INITIALIZING FULL-POWER AFTER_ROLLBACK_PROCESSOR !!!");
-
         ConsumerRecordRecoverer recoverer = (record, ex) -> {
             String rawPayload = null;
 
@@ -113,7 +114,7 @@ public class KafkaConfig {
                                     rawPayload = new String(bytes, StandardCharsets.UTF_8);
                                 }
                             } catch (Exception e) {
-                                rawPayload = "Hex Dump: " + javax.xml.bind.DatatypeConverter.printHexBinary(data);
+                                rawPayload = "Hex Dump: " + HexFormat.of().formatHex(data);
                             }
                         } else {
                             rawPayload = new String(data, StandardCharsets.UTF_8);
@@ -148,7 +149,9 @@ public class KafkaConfig {
                 org.springframework.dao.DataAccessException.class,
                 java.net.ConnectException.class,
                 org.springframework.web.client.ResourceAccessException.class,
-                java.util.concurrent.RejectedExecutionException.class
+                java.util.concurrent.RejectedExecutionException.class,
+                org.springframework.kafka.KafkaException.class,
+                java.util.concurrent.TimeoutException.class
         );
 
         return processor;
@@ -194,12 +197,6 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ProducerFactory<String, Object> testProducerFactory() {
-        Map<String, Object> conf = baseProducerConfig();
-        return new DefaultKafkaProducerFactory<>(conf);
-    }
-
-    @Bean
     public KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
     }
@@ -211,12 +208,26 @@ public class KafkaConfig {
     }
 
     @Bean
-    NewTopic createTopic() {
+    public NewTopic createTopic() {
         return TopicBuilder.name(publisherTopic)
                 .partitions(3)
                 .replicas(1)
                 .build();
     }
+    @Bean
+    public NewTopic deadLetterTopic() {
+        return TopicBuilder.name(businessDlqTopic)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
 
+    @Bean
+    public NewTopic rawInputTopic() {
+        return TopicBuilder.name("ai.processing.raw")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
 
 }

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 public class MockAiClient implements AiClient {
 
     @Override
-    public String analyze(String systemInstruction, String userContent) {
+    public String analyze(String systemInstruction, String userContent, String schemaJson, String ref) {
         return null;
     }
 }

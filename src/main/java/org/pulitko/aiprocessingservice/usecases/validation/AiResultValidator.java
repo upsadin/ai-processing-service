@@ -24,10 +24,9 @@ public class AiResultValidator {
 
     private final Map<String, JsonSchema> schemaCache = new ConcurrentHashMap<>();
 
-    public String cleanAndValidate(String rawResponse, String schemaJson, String ref) {
-        String cleanJson = cleanJson(rawResponse);
+    public String validate(String rawResponse, String schemaJson, String ref) {
         try {
-            JsonNode jsonNode = objectMapper.readTree(cleanJson);
+            JsonNode jsonNode = objectMapper.readTree(rawResponse);
             JsonSchema schema = schemaCache.computeIfAbsent(ref, k -> schemaFactory.getSchema(schemaJson));
             Set<ValidationMessage> errors = schema.validate(jsonNode);
             if (!errors.isEmpty()) {
@@ -47,17 +46,6 @@ public class AiResultValidator {
         } catch (Exception e) {
             throw new AiResultValidationException(ref, "Internal validation error", e);
         }
-        return cleanJson;
-    }
-
-    private String cleanJson(String text) {
-        if (text == null) return "";
-        int start = text.indexOf('{');
-        int end = text.lastIndexOf('}');
-
-        if (start != -1 && end != -1 && end > start) {
-            return text.substring(start, end + 1);
-        }
-        return text.trim();
+        return rawResponse;
     }
 }

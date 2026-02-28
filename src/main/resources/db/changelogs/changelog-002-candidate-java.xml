@@ -27,25 +27,18 @@
 4. Если контакты явно не указаны — попытаться найти их в тексте (email, телефон, ссылки).
 5. Не придумывать данные, которых нет в тексте.
 
-Ответ вернуть СТРОГО в формате JSON следующей структуры:
-{
-  "matches": true | false,
-  "confidence": число от 0 до 1,
-  "reason": "причина решения",
-  "full_name": "фамилия имя отчество(при наличии)",
-   "contacts": {
-    "email": string | null,
-    "phone": string | null,
-    "linkedin": string | null,
-    "telegram": string | null
-  }
-}
+Требования к полям:
+- matches: true, если соответствует критерийм отбора; false, если не соответствует критериям отбора
+- confidence: число от 0 до 1
+- reason: краткое обоснование решения (минимум 5 символов)
+- full_name: фамилия имя отчество(при наличии)
+- contacts: извлеки все найденные данные, если данных нет — используй null
 ]]>
             </column>
             <column name="schema_json">
                 <![CDATA[
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema#",
   "type": "object",
   "required": ["matches", "confidence", "reason", "full_name", "contacts"],
   "properties": {

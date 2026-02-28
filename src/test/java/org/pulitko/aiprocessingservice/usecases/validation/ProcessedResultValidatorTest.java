@@ -25,19 +25,8 @@ class ProcessedResultValidatorTest {
         String validJson = "{\"name\": \"Ivan\", \"confidence\": 0.85}";
 
         assertDoesNotThrow(() ->
-                validator.cleanAndValidate(validJson, schemaJson, "test-key")
+                validator.validate(validJson, schemaJson, "test-key")
         );
-    }
-
-    @Test
-    void shouldCleanAndValidateSuccessfully() {
-        String validJson = "Вот ваш json {\"name\": \"Ivan\", \"confidence\": 0.85} ";
-
-        assertDoesNotThrow(() ->
-                validator.cleanAndValidate(validJson, schemaJson, "test-key")
-        );
-        assertEquals((validator.cleanAndValidate(validJson, schemaJson, "test-key")),
-                "{\"name\": \"Ivan\", \"confidence\": 0.85}");
     }
 
     @Test
@@ -46,7 +35,7 @@ class ProcessedResultValidatorTest {
 
         AiResultValidationException exception = assertThrows(
                 AiResultValidationException.class,
-                () -> validator.cleanAndValidate(invalidJson, schemaJson, "test-key")
+                () -> validator.validate(invalidJson, schemaJson, "test-key")
         );
 
         String message = exception.getMessage();
@@ -59,7 +48,7 @@ class ProcessedResultValidatorTest {
 
         AiResultValidationException exception = assertThrows(
                 AiResultValidationException.class,
-                () -> validator.cleanAndValidate(highConfidenceJson, schemaJson, "test-key")
+                () -> validator.validate(highConfidenceJson, schemaJson, "test-key")
         );
 
         assertTrue(exception.getMessage().contains("Confidence out of range"));
@@ -72,7 +61,7 @@ class ProcessedResultValidatorTest {
 
         AiResultValidationException exception = assertThrows(
                 AiResultValidationException.class,
-                () -> validator.cleanAndValidate(malformedJson, schemaJson, "test-key")
+                () -> validator.validate(malformedJson, schemaJson, "test-key")
         );
 
         assertTrue(exception.getMessage().contains("Internal validation error"));

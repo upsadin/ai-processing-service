@@ -26,7 +26,6 @@ import static org.mockito.Mockito.*;
 import static org.pulitko.aiprocessingservice.util.TestData.SOURCE_ID_JAVACANDIDATE;
 
 @Slf4j
-@ActiveProfiles("test")
 class KafkaFlowTest extends AbstractDbIT {
     @MockBean
     private IncomingMessageValidator incomingMessageValidator;
@@ -60,15 +59,15 @@ class KafkaFlowTest extends AbstractDbIT {
 
         doNothing().when(incomingMessageValidator).validate(any());
         when(promptService.getByRef(msg.ref())).thenReturn(prompt);
-        when(aiClient.analyze(any(), any())).thenReturn(aiResult);
-        when(aiResultValidator.cleanAndValidate(any(), any(), any())).thenReturn(aiResult);
+        when(aiClient.analyze(any(), any(), anyString(),anyString())).thenReturn(aiResult);
+        when(aiResultValidator.validate(any(), any(), any())).thenReturn(aiResult);
 
         kafkaTemplate.executeInTransaction(t -> t.send(record));
 
 
         await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(aiProcessingService, atLeastOnce()).process(argThat(m -> m.ref().equals(msg.ref())));
-            verify(kafkaOutgoingPublisher, atLeastOnce()).send(any(),any());
+            verify(kafkaOutgoingPublisher, atLeastOnce()).send(any());
         });
     }
 

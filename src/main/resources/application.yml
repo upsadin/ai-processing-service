@@ -37,23 +37,37 @@ spring:
     consumer:
       isolation-level: read_committed
       enable-auto-commit: false
-
+      concurrency: 3
+  cache:
+    type: caffeine
+    cache-names: prompts
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=5m
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+server:
+  shutdown: graceful
 
 ai:
   api:
     key: ${OPENAI_API_KEY:not_set}
     base-url: https://api.openai.com/v1/chat/completions
     model-name: gpt-4.1-nano
-logging:
-  level:
-    org:
-      springframework:
-        jdbc:
-          core:
-            JdbcTemplate: DEBUG
-          datasource:
-            DataSourceUtils: DEBUG
-          transaction: DEBUG
-          jdbc:
-            support:
-              JdbcTransactionManager: DEBUG
+    temperature: 0.1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: ai-processing-service
+    distribution:
+      percentiles-histogram:
+        ai.request.duration: true
+      slo:
+        ai.request.duration: 500ms, 1s, 2s, 5s
+  tracing:
+    sampling:
+      probability: 1.0

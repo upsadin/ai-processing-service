@@ -24,17 +24,6 @@ public class AppConfig {
                 .findAndAddModules()
                 .build();
     }
-    @Bean
-    public CommandLineRunner printTransactionManagers(ApplicationContext ctx) {
-        return args -> {
-            System.out.println("---- ПРОВЕРКА TRANSACTION MANAGERS ----");
-            Map<String, PlatformTransactionManager> managers = ctx.getBeansOfType(PlatformTransactionManager.class);
-            managers.forEach((name, bean) -> {
-                System.out.println("Бин: " + name + " -> Тип: " + bean.getClass().getName());
-            });
-            System.out.println("---------------------------------------");
-        };
-    }
 
     @Bean(name = {"transactionManager", "jdbcTransactionManager"})
     @Primary
