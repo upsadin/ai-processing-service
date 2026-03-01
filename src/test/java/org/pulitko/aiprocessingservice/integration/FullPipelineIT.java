@@ -1,32 +1,23 @@
 package org.pulitko.aiprocessingservice.integration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.awaitility.Awaitility;
-import org.json.JSONException;
 import org.junit.jupiter.api.*;
-import org.pulitko.aiprocessingservice.ai.AiClient;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.util.AbstractDbIT;
 import org.pulitko.aiprocessingservice.util.TestData;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
-import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -35,20 +26,13 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.pulitko.aiprocessingservice.util.TestData.INCOMING_MESSAGE;
 import static org.pulitko.aiprocessingservice.util.TestData.SOURCE_ID_JAVACANDIDATE;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@EmbeddedKafka(
-        partitions = 1,
-        topics = {
-                "${spring.kafka.topics.outgoing}",
-                "${spring.kafka.topics.incoming}"
-        }
-)
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FullPipelineIT extends AbstractDbIT {
 
@@ -58,59 +42,56 @@ class FullPipelineIT extends AbstractDbIT {
     @Value("${spring.kafka.topics.outgoing}")
     private String outgoingTopic;
 
-    @Autowired
-    private EmbeddedKafkaBroker embeddedKafka;
-
-    @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
-
-    @MockBean
-    private AiClient aiClient;
-
     private Consumer<String, String> testConsumer;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
-    void setUp() {
+    void setUpConsumer() {
         Map<String, Object> props = KafkaTestUtils.consumerProps(
-                "test-group-" + java.util.UUID.randomUUID(), "true", embeddedKafka);
+                kafka.getBootstrapServers(), "test-group-pipeline", "true");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
         testConsumer = new DefaultKafkaConsumerFactory<>(
                 props,
                 new StringDeserializer(),
                 new StringDeserializer()).createConsumer();
-        embeddedKafka.consumeFromAnEmbeddedTopic(testConsumer, outgoingTopic);
+
+        testConsumer.subscribe(Collections.singleton(outgoingTopic));
     }
 
     @AfterEach
     void closeConsumer() {
         if (testConsumer != null) {
-            testConsumer.close();
+            testConsumer.unsubscribe();
+            testConsumer.close(Duration.ofSeconds(5));
         }
     }
 
     @Test
-    void shouldLoadPromptFromDbAndPublishResult() throws JSONException, JsonProcessingException, InterruptedException {
-        String sourceId = SOURCE_ID_JAVACANDIDATE;
+    void shouldLoadPromptFromDbAndPublishResult() throws Exception {
         IncomingMessage incomingMessage = INCOMING_MESSAGE;
         String aiResponse = TestData.SUCCESS_AI_RESULT;
-        testConsumer.subscribe(Collections.singleton(outgoingTopic));
-        when(aiClient.analyze(anyString(),anyString(),anyString(),anyString())).thenReturn(aiResponse);
+        String sourceId = SOURCE_ID_JAVACANDIDATE;
+
+        when(promptService.getActivePrompt(anyString())).thenReturn(TestData.PROMPT);
+        when(promptMapper.toAiDto(any())).thenReturn(TestData.PROMPT);
+        when(aiClient.analyze(anyString(), anyString(), anyString(), anyString())).thenReturn(aiResponse);
 
         ProducerRecord<String, Object> record = new ProducerRecord<>(incomingTopic, incomingMessage);
-        record.headers().add("x-sourceId",sourceId.getBytes(StandardCharsets.UTF_8));
+        record.headers().add("x-sourceId", sourceId.getBytes(StandardCharsets.UTF_8));
 
+        kafkaTemplate.executeInTransaction(t -> {
+            t.send(record);
+            return null;
+        });
 
-        kafkaTemplate.send(record);
-        kafkaTemplate.flush();
         AtomicReference<ConsumerRecord<String, String>> receivedRef = new AtomicReference<>();
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(500))
                 .until(() -> {
-                    ConsumerRecords<String, String> records = KafkaTestUtils.getRecords(testConsumer, Duration.ofSeconds(1));
+                    ConsumerRecords<String, String> records = testConsumer.poll(Duration.ofMillis(200));
                     if (!records.isEmpty()) {
                         receivedRef.set(records.iterator().next());
                         return true;
@@ -120,12 +101,11 @@ class FullPipelineIT extends AbstractDbIT {
 
         ConsumerRecord<String, String> received = receivedRef.get();
         assertThat(received).isNotNull();
-
-        JSONAssert.assertEquals(aiResponse, received.value(), true);
         assertThat(received.key()).isEqualTo(sourceId);
-
-        Header sourceHeader = received.headers().lastHeader("x-sourceId");
-        assertThat(sourceHeader).isNotNull();
-        assertThat(new String(sourceHeader.value(), StandardCharsets.UTF_8)).isEqualTo(sourceId);
+        JsonNode rootNode = objectMapper.readTree(received.value());
+        assertThat(rootNode.get("sourceId").asText()).isEqualTo(sourceId);
+        assertThat(rootNode.get("ref").asText()).isEqualTo(incomingMessage.ref());
+        JsonNode actualAiResult = rootNode.get("aiResult");
+        JSONAssert.assertEquals(aiResponse, actualAiResult.toString(), true);
     }
 }

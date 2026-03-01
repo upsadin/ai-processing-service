@@ -1,15 +1,17 @@
 package org.pulitko.aiprocessingservice.prompt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pulitko.aiprocessingservice.exception.PromptNotFoundException;
-import org.pulitko.aiprocessingservice.model.Prompt;
+import org.pulitko.aiprocessingservice.dto.Prompt;
 import org.pulitko.aiprocessingservice.model.PromptEntity;
 import org.pulitko.aiprocessingservice.repository.PromptRepository;
 import org.pulitko.aiprocessingservice.service.PromptServiceDb;
+import org.pulitko.aiprocessingservice.usecases.mapper.PromptMapper;
 
 import java.util.Optional;
 
@@ -22,9 +24,14 @@ import static org.pulitko.aiprocessingservice.util.TestData.REF_JAVACANDIDATE;
 class PromptServiceDbTest {
     @Mock
     private PromptRepository promptRepository;
-
-    @InjectMocks
+    private final PromptMapper promptMapper = new PromptMapper();
     private PromptServiceDb promptService;
+
+    @BeforeEach
+    void setUp() {
+
+        promptService = new PromptServiceDb(promptRepository, promptMapper, new ObjectMapper());
+    }
 
     @Test
     void shouldReturnPromptWhenFound() {
@@ -33,7 +40,7 @@ class PromptServiceDbTest {
 
         when(promptRepository.findByRefAndActiveTrue(ref)).thenReturn(Optional.of(entity));
 
-        Prompt result = promptService.getByRef(ref);
+        Prompt result = promptService.getActivePrompt(ref);
 
         assertNotNull(result);
         assertEquals(ref, result.ref());
@@ -47,6 +54,6 @@ class PromptServiceDbTest {
         String ref = "unknown-ref";
         when(promptRepository.findByRefAndActiveTrue(ref)).thenReturn(Optional.empty());
 
-        assertThrows(PromptNotFoundException.class, () -> promptService.getByRef(ref));
+        assertThrows(PromptNotFoundException.class, () -> promptService.getActivePrompt(ref));
     }
 }

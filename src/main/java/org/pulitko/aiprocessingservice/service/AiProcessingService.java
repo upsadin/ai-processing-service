@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.pulitko.aiprocessingservice.ai.AiClient;
 import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
-import org.pulitko.aiprocessingservice.model.Prompt;
+import org.pulitko.aiprocessingservice.dto.Prompt;
 import org.pulitko.aiprocessingservice.usecases.validation.AiResultValidator;
 import org.pulitko.aiprocessingservice.usecases.validation.IncomingMessageValidator;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ public class AiProcessingService {
         }
         String ref = message.ref();
         incomingMessageValidator.validate(message);
-        Prompt prompt = promptService.getByRef(ref);
+        Prompt prompt = promptService.getActivePrompt(ref);
         try {
             String aiResultAsString = aiClient.analyze(prompt.template(), message.payload(), prompt.schemaJson(), ref);
             aiResultAsString = aiResultValidator.validate(aiResultAsString, prompt.schemaJson(), ref);

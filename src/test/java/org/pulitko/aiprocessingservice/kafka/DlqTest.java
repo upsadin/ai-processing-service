@@ -7,6 +7,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.pulitko.aiprocessingservice.exception.AiResultValidationException;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
+import org.pulitko.aiprocessingservice.exception.PromptNotFoundException;
 import org.pulitko.aiprocessingservice.util.AbstractDbIT;
 import org.springframework.beans.factory.annotation.Value;
 import java.time.Duration;
@@ -54,6 +55,8 @@ class DlqTest extends AbstractDbIT {
 
         ProducerRecord<String, Object> record = new ProducerRecord<>(incoming, msg);
         record.headers().add("x-sourceId", SOURCE_ID_JAVACANDIDATE.getBytes());
+        when(promptService.getActivePrompt("ref-1"))
+                .thenThrow(new PromptNotFoundException("Prompt not found for ref ref-1"));
         kafkaTemplate.executeInTransaction(t -> t.send(record));
         await()
                 .atMost(Duration.ofSeconds(10))

@@ -16,7 +16,7 @@ import org.pulitko.aiprocessingservice.exception.IncomingMessageValidationExcept
 import org.pulitko.aiprocessingservice.exception.PromptNotFoundException;
 import org.pulitko.aiprocessingservice.kafka.KafkaOutgoingPublisher;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
-import org.pulitko.aiprocessingservice.model.Prompt;
+import org.pulitko.aiprocessingservice.dto.Prompt;
 import org.pulitko.aiprocessingservice.usecases.validation.AiResultValidator;
 import org.pulitko.aiprocessingservice.usecases.validation.IncomingMessageValidator;
 import org.pulitko.aiprocessingservice.util.TestData;
@@ -37,7 +37,7 @@ class AiProcessingServiceApplicationTests {
     @Mock
     private AiResultValidator aiResultValidator;
     @Mock
-    private IncomingMessageValidator incomingMessageValidator;;
+    private IncomingMessageValidator incomingMessageValidator;
     @Mock
     private KafkaOutgoingPublisher kafkaOutgoingPublisher;
 
@@ -54,7 +54,7 @@ class AiProcessingServiceApplicationTests {
         IncomingMessage msg = INCOMING_MESSAGE;
         Prompt prompt = TestData.PROMPT;
 
-        when(promptService.getByRef(msg.ref())).thenReturn(prompt);
+        when(promptService.getActivePrompt(msg.ref())).thenReturn(prompt);
         when(aiClient.analyze(any(), any(), anyString(),anyString())).thenReturn(SUCCESS_AI_RESULT);
         when(aiResultValidator.validate(anyString(),anyString(),anyString())).thenReturn(SUCCESS_AI_RESULT);
 
@@ -70,7 +70,7 @@ class AiProcessingServiceApplicationTests {
     void shouldThrowExceptionWhenValidationFails() {
         IncomingMessage msg = INCOMING_MESSAGE;
         Prompt prompt = TestData.PROMPT;
-        when(promptService.getByRef(msg.ref())).thenReturn(prompt);
+        when(promptService.getActivePrompt(msg.ref())).thenReturn(prompt);
         when(aiClient.analyze(any(), any(), anyString(),anyString())).thenReturn(SUCCESS_AI_RESULT);
         doThrow(new AiResultValidationException(REF_JAVACANDIDATE, "Confidence out of range"))
                 .when(aiResultValidator).validate(anyString(), anyString(), anyString());
@@ -94,7 +94,7 @@ class AiProcessingServiceApplicationTests {
         assertThrows(IncomingMessageValidationException.class, () -> {
             service.process(msg);
         });
-        verify(promptService, never()).getByRef(any());
+        verify(promptService, never()).getActivePrompt(any());
         verify(aiClient, never()).analyze(any(), any(), anyString(),anyString());
         verify(aiResultValidator, never()).validate(any(),any(),any());
         verify(kafkaOutgoingPublisher, never()).send(any());
@@ -107,7 +107,7 @@ class AiProcessingServiceApplicationTests {
 
         doNothing().when(incomingMessageValidator).validate(msg);
         doThrow(new PromptNotFoundException("Prompt not found for ref= " + INCOMING_MESSAGE.ref())).
-                when(promptService).getByRef(msg.ref());
+                when(promptService).getActivePrompt(msg.ref());
 
         assertThrows(PromptNotFoundException.class, () -> {
             service.process(msg);

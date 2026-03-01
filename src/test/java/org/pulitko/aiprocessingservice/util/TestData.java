@@ -1,8 +1,7 @@
 package org.pulitko.aiprocessingservice.util;
 
-import org.pulitko.aiprocessingservice.dto.Contacts;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
-import org.pulitko.aiprocessingservice.model.Prompt;
+import org.pulitko.aiprocessingservice.dto.Prompt;
 import org.pulitko.aiprocessingservice.model.PromptEntity;
 
 public class TestData {

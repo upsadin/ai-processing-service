@@ -1,7 +1,9 @@
 package org.pulitko.aiprocessingservice.model;
 
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -23,6 +25,8 @@ public class PromptEntity {
     @Column("schema_json")
     private String schemaJson;
     private boolean active;
+    @CreatedDate
     private Instant createdAt;
+    @LastModifiedDate
     private Instant updatedAt;
 }

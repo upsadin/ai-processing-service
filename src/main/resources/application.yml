@@ -6,6 +6,11 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:ai_user}
     password: ${SPRING_DATASOURCE_PASSWORD:ai_pass}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      initializationFailTimeout: 60000
+      connectionTimeout: 30000
+      maximumPoolSize: 10
+      minimumIdle: 2
   liquibase:
       change-log: classpath:db/changelog.xml
       enabled: true
@@ -17,7 +22,7 @@ spring:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     topics:
       incoming: ai.processing.raw
-      outgoing: ai.candidate.filtered
+      outgoing: ai.processing.filtered
       processing-dlq: ai.processing.business.dlq
     groups-id:
       consumer: ai-processing
@@ -34,10 +39,24 @@ spring:
               requests:
                 per:
                   connection: 5
+        max.block.ms: 60000
     consumer:
       isolation-level: read_committed
       enable-auto-commit: false
       concurrency: 3
+      #      fetch-max-wait: 50ms
+#      fetch-min-size: 1024
+      max-poll-records: 1
+    properties:
+      reconnect.backoff.ms: 1000
+      reconnect.backoff.max.ms: 10000
+      retry.backoff.ms: 1000
+      max.poll.interval.ms: 600000
+    admin:
+      fail-fast: false
+    spring:
+      kafka:
+        listener
   cache:
     type: caffeine
     cache-names: prompts
@@ -71,3 +90,10 @@ management:
   tracing:
     sampling:
       probability: 1.0
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  show-actuator: true

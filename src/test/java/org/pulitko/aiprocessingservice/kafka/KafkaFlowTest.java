@@ -7,19 +7,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
-import org.pulitko.aiprocessingservice.model.Prompt;
+import org.pulitko.aiprocessingservice.dto.Prompt;
 import org.pulitko.aiprocessingservice.usecases.validation.AiResultValidator;
 import org.pulitko.aiprocessingservice.usecases.validation.IncomingMessageValidator;
 import org.pulitko.aiprocessingservice.util.AbstractDbIT;
 import org.pulitko.aiprocessingservice.util.TestData;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -27,11 +25,10 @@ import static org.pulitko.aiprocessingservice.util.TestData.SOURCE_ID_JAVACANDID
 
 @Slf4j
 class KafkaFlowTest extends AbstractDbIT {
-    @MockBean
-    private IncomingMessageValidator incomingMessageValidator;
+    @MockBean private IncomingMessageValidator incomingMessageValidator;
 
-    @MockBean
-    private AiResultValidator aiResultValidator;
+    @MockBean private AiResultValidator aiResultValidator;
+
 
     @Value("${spring.kafka.topics.outgoing}")
     private String outTopic;
@@ -46,6 +43,7 @@ class KafkaFlowTest extends AbstractDbIT {
         Mockito.reset(promptService, aiClient, incomingMessageValidator, aiResultValidator);
     }
 
+
     @Test
     void testKafkaFlow() {
         IncomingMessage msg = TestData.INCOMING_MESSAGE;
@@ -58,7 +56,8 @@ class KafkaFlowTest extends AbstractDbIT {
         String aiResult = TestData.SUCCESS_AI_RESULT;
 
         doNothing().when(incomingMessageValidator).validate(any());
-        when(promptService.getByRef(msg.ref())).thenReturn(prompt);
+        when(promptMapper.toAiDto(any())).thenReturn(prompt);
+        when(promptService.getActivePrompt(msg.ref())).thenReturn(prompt);
         when(aiClient.analyze(any(), any(), anyString(),anyString())).thenReturn(aiResult);
         when(aiResultValidator.validate(any(), any(), any())).thenReturn(aiResult);
 

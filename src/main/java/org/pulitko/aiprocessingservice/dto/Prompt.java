@@ -1,4 +1,4 @@
-package org.pulitko.aiprocessingservice.model;
+package org.pulitko.aiprocessingservice.dto;
 
 public record Prompt(
         String ref,
