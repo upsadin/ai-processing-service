@@ -16,7 +16,7 @@ public class TestController {
     @Value("${spring.kafka.topics.incoming}")
     private String topic;
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @PostMapping("/send")
     public String send(@RequestBody String message) {
