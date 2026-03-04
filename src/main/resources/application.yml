@@ -65,6 +65,7 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
 server:
+  port: ${PORT:8080}
   shutdown: graceful
 
 ai:

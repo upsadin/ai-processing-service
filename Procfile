@@ -1,0 +1,1 @@
+web: java -XX:+UseContainerSupport -Xms256m -Xmx512m -jar target/*.jar --spring.profiles.active=heroku
