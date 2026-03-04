@@ -17,6 +17,14 @@ spring:
       transaction-id-prefix: ai-processing-tx-${DYNO:local}-
     consumer:
       concurrency: 1
+    topics:
+      incoming: ${KAFKACLUSTER_PREFIX}ai.processing.incoming
+      outgoing: ${KAFKACLUSTER_PREFIX}ai.processing.outgoing
+      processing-dlq: ${KAFKACLUSTER_PREFIX}ai.processing.processing.dlq
+
+      groups-id:
+        consumer: ${KAFKACLUSTER_PREFIX}ai-processing
+        dlq: ${KAFKACLUSTER_PREFIX}ai-processing-dlq
 
   jpa:
     open-in-view: false
