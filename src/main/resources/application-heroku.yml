@@ -10,8 +10,8 @@ spring:
       sasl.mechanism: SCRAM-SHA-512
       sasl.jaas.config: >
         org.apache.kafka.common.security.scram.ScramLoginModule required
-        username="${KAFKACLUSTER_USERNAME}"
-        password="${KAFKACLUSTER_PASSWORD}";
+        username=${KAFKACLUSTER_USERNAME}
+        password=${KAFKACLUSTER_PASSWORD};
     consumer:
       auto-offset-reset: latest
       max-poll-records: 1
@@ -24,6 +24,8 @@ spring:
     listener:
       concurrency: 1
       type: single
+    admin:
+      auto-create: false
   main:
     lazy-initialization: true
 
