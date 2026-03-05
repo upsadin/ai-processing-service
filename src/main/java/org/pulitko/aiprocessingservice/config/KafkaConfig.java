@@ -13,6 +13,7 @@ import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -46,12 +47,13 @@ public class KafkaConfig {
     private String businessDlqTopic;
 
     private final KafkaProperties kafkaProperties;
+    private final SslBundles sslBundles;
 
     private final DeserializationErrorService errorService;
 
     @Bean
     public ConsumerFactory<String, IncomingMessage> consumerFactory() {
-        Map<String, Object> config = kafkaProperties.buildConsumerProperties(null);
+        Map<String, Object> config = kafkaProperties.buildConsumerProperties(sslBundles);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
@@ -156,7 +158,7 @@ public class KafkaConfig {
     }
 
     private Map<String, Object> baseProducerConfig() {
-        Map<String, Object> conf = kafkaProperties.buildProducerProperties(null);
+        Map<String, Object> conf = kafkaProperties.buildProducerProperties(sslBundles);
         conf.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         conf.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return conf;
