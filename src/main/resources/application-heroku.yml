@@ -3,7 +3,6 @@ spring:
     url: ${DATABASE_URL}
     hikari:
       maximumPoolSize: 5
-
   kafka:
     bootstrap-servers: ${KAFKACLUSTER_BROKERS}
     properties:
@@ -13,24 +12,18 @@ spring:
         org.apache.kafka.common.security.plain.PlainLoginModule required
         username="${KAFKACLUSTER_USERNAME}"
         password="${KAFKACLUSTER_PASSWORD}";
-    producer:
-      transaction-id-prefix: ai-processing-tx-${DYNO:local}-
     consumer:
-      concurrency: 1
+      auto-offset-reset: latest
+      max-poll-records: 1
+      fetch-max-wait: 500
       properties:
-        fetch.max.bytes: 102400
-        max.partition.fetch.bytes: 51200
-        receive.buffer.bytes: 32768
-        max.poll.records: 1
-    topics:
-      incoming: ${KAFKACLUSTER_PREFIX}ai.processing.incoming
-      outgoing: ${KAFKACLUSTER_PREFIX}ai.processing.outgoing
-      processing-dlq: ${KAFKACLUSTER_PREFIX}ai.processing.processing.dlq
+        "fetch.max.bytes": 1048576
+        "max.partition.fetch.bytes": 1048576
+        "receive.buffer.bytes": 65536
+        "spring.json.trusted.packages": "*"
     listener:
       concurrency: 1
-      groups-id:
-        consumer: ${KAFKACLUSTER_PREFIX}ai-processing
-        dlq: ${KAFKACLUSTER_PREFIX}ai-processing-dlq
+      type: single
 
   jpa:
     open-in-view: false
