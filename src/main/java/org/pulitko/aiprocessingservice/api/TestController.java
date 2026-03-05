@@ -23,7 +23,7 @@ public class TestController {
     public String send(@RequestBody String message) {
         ProducerRecord<String, Object> record = new ProducerRecord<>(topic, message);
         record.headers().add("x-sourceId", "x1".getBytes());
-        kafkaTemplate.send(record);
+        kafkaTemplate.executeInTransaction(t -> t.send(record));
         return "Sent to Kafka!";
     }
 }
