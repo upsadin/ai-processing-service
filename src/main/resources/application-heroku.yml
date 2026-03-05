@@ -17,9 +17,6 @@ spring:
         fetch.max.bytes: 1048576
         max.partition.fetch.bytes: 1048576
         receive.buffer.bytes: 65536
-        security.protocol: SASL_SSL
-        sasl.mechanism: SCRAM-SHA-512
-        sasl.jaas.config: "org.apache.kafka.common.security.scram.ScramLoginModule required username='${KAFKACLUSTER_USERNAME}' password='${KAFKACLUSTER_PASSWORD}';"
     producer:
       transaction-id-prefix: ai-processing-tx-${DYNO:local}-
       buffer-memory: 524288
@@ -27,9 +24,6 @@ spring:
       properties:
         max.in.flight.requests.per.connection: 1
         metadata.max.age.ms: 60000
-        security.protocol: SASL_SSL
-        sasl.mechanism: SCRAM-SHA-512
-        sasl.jaas.config: "org.apache.kafka.common.security.scram.ScramLoginModule required username='${KAFKACLUSTER_USERNAME}' password='${KAFKACLUSTER_PASSWORD}';"
     listener:
       concurrency: 1
       type: single
