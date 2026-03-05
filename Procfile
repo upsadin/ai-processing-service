@@ -1,1 +1,3 @@
-web: java -XX:+UseContainerSupport -Xmx360m -Xms360m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Xss512k -jar target/*.jar --spring.profiles.active=heroku
+web: java
+-XX:+UseContainerSupport -Xmx380m -Xms380m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError
+-Xss512k -jar target/*.jar --spring.profiles.active=heroku

@@ -18,9 +18,9 @@ spring:
     consumer:
       concurrency: 1
       properties:
-        fetch.max.bytes: 1048576
-        max.partition.fetch.bytes: 1048576
-        max-poll-records: 5
+        fetch.max.bytes: 524288
+        max.partition.fetch.bytes: 262144
+        receive.buffer.bytes: 131072
     topics:
       incoming: ${KAFKACLUSTER_PREFIX}ai.processing.incoming
       outgoing: ${KAFKACLUSTER_PREFIX}ai.processing.outgoing
