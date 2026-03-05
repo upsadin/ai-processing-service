@@ -14,7 +14,7 @@ spring:
           properties:
             security.protocol: SASL_SSL
             sasl.mechanism: SCRAM-SHA-512
-            sasl.jaas.config: >
+            "[sasl.jaas.config]": >
               org.apache.kafka.common.security.scram.ScramLoginModule required
               username="${KAFKACLUSTER_USERNAME}"
               password="${KAFKACLUSTER_PASSWORD}";
@@ -52,3 +52,6 @@ spring:
     open-in-view: false
 server:
   forward-headers-strategy: framework
+logging:
+  level:
+    org.apache.kafka: DEBUG
