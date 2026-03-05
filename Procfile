@@ -1,1 +1,1 @@
-web: java -XX:+UseContainerSupport -Xms256m -Xmx512m -jar target/*.jar --spring.profiles.active=heroku
+web: java -XX:+UseContainerSupport -Xmx320m -Xss512k -XX:CICompilerCount=2 -jar target/*.jar --spring.profiles.active=heroku
