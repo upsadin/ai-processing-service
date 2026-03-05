@@ -5,9 +5,9 @@ spring:
       maximumPoolSize: 5
   kafka:
     bootstrap-servers: ${KAFKACLUSTER_BROKERS}
-    security.protocol: SASL_SSL
+    properties:
+      security.protocol: SASL_SSL
       sasl.mechanism: SCRAM-SHA-512
-      # Используем одинарные кавычки внутри двойных, чтобы Java точно поняла строку
       sasl.jaas.config: "org.apache.kafka.common.security.scram.ScramLoginModule required username='${KAFKACLUSTER_USERNAME}' password='${KAFKACLUSTER_PASSWORD}';"
     consumer:
       auto-offset-reset: latest
