@@ -7,9 +7,9 @@ spring:
     bootstrap-servers: ${KAFKACLUSTER_BROKERS}
     properties:
       security.protocol: SASL_SSL
-      sasl.mechanism: PLAIN
+      sasl.mechanism: SCRAM-SHA-512
       sasl.jaas.config: >
-        org.apache.kafka.common.security.plain.PlainLoginModule required
+        org.apache.kafka.common.security.scram.ScramLoginModule required
         username="${KAFKACLUSTER_USERNAME}"
         password="${KAFKACLUSTER_PASSWORD}";
     consumer:
