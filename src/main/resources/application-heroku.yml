@@ -24,6 +24,8 @@ spring:
     listener:
       concurrency: 1
       type: single
+  main:
+    lazy-initialization: true
 
   jpa:
     open-in-view: false
