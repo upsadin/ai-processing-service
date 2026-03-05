@@ -17,11 +17,16 @@ spring:
       transaction-id-prefix: ai-processing-tx-${DYNO:local}-
     consumer:
       concurrency: 1
+      properties:
+        fetch.max.bytes: 1048576
+        max.partition.fetch.bytes: 1048576
+        max-poll-records: 5
     topics:
       incoming: ${KAFKACLUSTER_PREFIX}ai.processing.incoming
       outgoing: ${KAFKACLUSTER_PREFIX}ai.processing.outgoing
       processing-dlq: ${KAFKACLUSTER_PREFIX}ai.processing.processing.dlq
-
+    listener:
+      concurrency: 1
       groups-id:
         consumer: ${KAFKACLUSTER_PREFIX}ai-processing
         dlq: ${KAFKACLUSTER_PREFIX}ai-processing-dlq
