@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
@@ -35,6 +36,7 @@ import java.util.Map;
 @Configuration
 @RequiredArgsConstructor
 @EnableKafka
+@Profile("!heroku")
 public class KafkaConfig {
 
     @Value("${spring.kafka.topics.outgoing}")
@@ -53,7 +55,7 @@ public class KafkaConfig {
 
     @Bean
     public ConsumerFactory<String, IncomingMessage> consumerFactory() {
-        Map<String, Object> config = kafkaProperties.buildConsumerProperties(sslBundles);
+        Map<String, Object> config = kafkaProperties.buildConsumerProperties(null);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
@@ -158,7 +160,7 @@ public class KafkaConfig {
     }
 
     private Map<String, Object> baseProducerConfig() {
-        Map<String, Object> conf = kafkaProperties.buildProducerProperties(sslBundles);
+        Map<String, Object> conf = kafkaProperties.buildProducerProperties(null);
         conf.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         conf.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return conf;
