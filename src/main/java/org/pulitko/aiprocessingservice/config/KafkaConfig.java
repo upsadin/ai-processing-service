@@ -12,6 +12,7 @@ import org.pulitko.aiprocessingservice.exception.BaseBusinessException;
 import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -26,7 +27,6 @@ import org.springframework.util.backoff.FixedBackOff;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
 
@@ -35,11 +35,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 @EnableKafka
 public class KafkaConfig {
-    @Value("${spring.kafka.bootstrap-servers}")
-    private String bootstrapServers;
-
-    @Value("${spring.kafka.groups-id.consumer}")
-    private String groupId;
 
     @Value("${spring.kafka.topics.outgoing}")
     private String publisherTopic;
@@ -50,26 +45,13 @@ public class KafkaConfig {
     @Value("${spring.kafka.topics.processing-dlq}")
     private String businessDlqTopic;
 
-    @Value("${spring.kafka.producer.properties.enable.idempotence}")
-    private Boolean idempotence;
-
-    @Value("${spring.kafka.producer.properties.max.in.flight.requests.per.connection}")
-    private Integer maxInFlight;
-
-    @Value("${spring.kafka.producer.transaction-id-prefix}")
-    private String transactionalIdPrefix;
-
-    @Value("${spring.kafka.consumer.isolation-level}")
-    private String isolationLevel;
+    private final KafkaProperties kafkaProperties;
 
     private final DeserializationErrorService errorService;
 
     @Bean
     public ConsumerFactory<String, IncomingMessage> consumerFactory() {
-        Map<String, Object> config = new HashMap<>();
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        config.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, isolationLevel);
+        Map<String, Object> config = kafkaProperties.buildConsumerProperties(null);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
@@ -174,15 +156,9 @@ public class KafkaConfig {
     }
 
     private Map<String, Object> baseProducerConfig() {
-        Map<String, Object> conf = new HashMap<>();
-        conf.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        Map<String, Object> conf = kafkaProperties.buildProducerProperties(null);
         conf.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         conf.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        conf.put(ProducerConfig.RETRIES_CONFIG, 10);
-        conf.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 1000);
-        conf.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 60000);
-        conf.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, idempotence);
-        conf.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, maxInFlight);
         return conf;
     }
 
@@ -191,8 +167,9 @@ public class KafkaConfig {
         Map<String, Object> conf = baseProducerConfig();
         DefaultKafkaProducerFactory<String, Object> factory =
                 new DefaultKafkaProducerFactory<>(conf);
-        if (transactionalIdPrefix != null && !transactionalIdPrefix.isBlank()) {
-            factory.setTransactionIdPrefix(transactionalIdPrefix);
+        String txPrefix = kafkaProperties.getProducer().getTransactionIdPrefix();
+        if (txPrefix != null && !txPrefix.isBlank()) {
+            factory.setTransactionIdPrefix(txPrefix);
         }
 
         return factory;

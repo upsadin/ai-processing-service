@@ -30,15 +30,12 @@ spring:
     producer:
       transaction-id-prefix: ai-processing-tx-${random.value}-
       acks: all
+      retries: 10
       properties:
-        enable:
-          idempotence: true
-        max:
-          in:
-            flight:
-              requests:
-                per:
-                  connection: 5
+        retry.backoff.ms: 1000
+        delivery.timeout.ms: 60000
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
         max.block.ms: 60000
     consumer:
       isolation-level: read_committed
