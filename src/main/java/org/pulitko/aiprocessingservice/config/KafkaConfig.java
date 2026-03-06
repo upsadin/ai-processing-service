@@ -170,17 +170,18 @@ public class KafkaConfig {
         Map<String, Object> conf = baseProducerConfig();
         String username = System.getenv("KAFKACLUSTER_USERNAME");
         String password = System.getenv("KAFKACLUSTER_PASSWORD");
+        log.info("Kafka username length: {}", username.length());
+        log.info("Kafka password length: {}", password.length());
+        log.info("Kafka username: [{}]", username);
 
         if (username != null && password != null) {
             conf.put("security.protocol", "SASL_SSL");
             conf.put("sasl.mechanism", "SCRAM-SHA-512");
             conf.put(
                     "sasl.jaas.config",
-                    "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"" +
-                            username +
-                            "\" password=\"" +
-                            password +
-                            "\";"
+                    "org.apache.kafka.common.security.scram.ScramLoginModule required " +
+                            "username=\"" + username + "\" " +
+                            "password=\"" + password + "\";"
             );
         }
         DefaultKafkaProducerFactory<String, Object> factory =
