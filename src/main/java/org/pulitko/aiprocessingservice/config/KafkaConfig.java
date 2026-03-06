@@ -36,7 +36,6 @@ import java.util.Map;
 @Configuration
 @RequiredArgsConstructor
 @EnableKafka
-@Profile("!heroku")
 public class KafkaConfig {
 
     @Value("${spring.kafka.topics.outgoing}")
@@ -169,6 +168,21 @@ public class KafkaConfig {
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> conf = baseProducerConfig();
+        String username = System.getenv("KAFKACLUSTER_USERNAME");
+        String password = System.getenv("KAFKACLUSTER_PASSWORD");
+
+        if (username != null && password != null) {
+            conf.put("security.protocol", "SASL_SSL");
+            conf.put("sasl.mechanism", "SCRAM-SHA-512");
+            conf.put(
+                    "sasl.jaas.config",
+                    "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"" +
+                            username +
+                            "\" password=\"" +
+                            password +
+                            "\";"
+            );
+        }
         DefaultKafkaProducerFactory<String, Object> factory =
                 new DefaultKafkaProducerFactory<>(conf);
         String txPrefix = kafkaProperties.getProducer().getTransactionIdPrefix();
