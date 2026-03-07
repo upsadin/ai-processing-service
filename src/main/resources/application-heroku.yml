@@ -27,12 +27,12 @@ spring:
       concurrency: 1
       type: single
     topics:
-      incoming: ${KAFKACLUSTER_PREFIX}-ai.processing.raw
-      outgoing: ${KAFKACLUSTER_PREFIX}-ai.processing.filtered
-      processing-dlq: ${KAFKACLUSTER_PREFIX}-ai.processing.business.dlq
+      incoming: ${KAFKACLUSTER_PREFIX}ai.processing.raw
+      outgoing: ${KAFKACLUSTER_PREFIX}ai.processing.filtered
+      processing-dlq: ${KAFKACLUSTER_PREFIX}ai.processing.business.dlq
     groups-id:
-      consumer: ${KAFKACLUSTER_PREFIX}-ai-processing
-      dlq: ${KAFKACLUSTER_PREFIX}-ai-processing-dlq
+      consumer: ${KAFKACLUSTER_PREFIX}ai-processing
+      dlq: ${KAFKACLUSTER_PREFIX}ai-processing-dlq
     admin:
       auto-create: false
   main:
