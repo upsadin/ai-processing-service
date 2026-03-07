@@ -203,20 +203,26 @@ public class KafkaConfig {
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> conf = baseProducerConfig();
-        String username = System.getenv("KAFKACLUSTER_USERNAME");
-        String password = System.getenv("KAFKACLUSTER_PASSWORD");
-        log.info("Kafka username length: {}", username.length());
-        log.info("Kafka password length: {}", password.length());
-        log.info("Kafka username: [{}]", username);
+        String kafkaUsername = System.getenv("KAFKACLUSTER_USERNAME");
+        String kafkaPassword = System.getenv("KAFKACLUSTER_PASSWORD");
+        String prefix = System.getenv("KAFKACLUSTER_PREFIX");
 
-        if (username != null && password != null) {
+        String fullUsername = prefix + "." + kafkaUsername;
+
+        String jaasConfig = String.format(
+                "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";",
+                fullUsername,
+                kafkaPassword
+        );
+        log.info("Kafka username length: {}", kafkaUsername.length());
+        log.info("Kafka password length: {}", kafkaPassword.length());
+        log.info("Kafka username: [{}]", fullUsername);
+
+        if (fullUsername != null && kafkaPassword != null) {
             conf.put("security.protocol", "SASL_SSL");
             conf.put("sasl.mechanism", "SCRAM-SHA-512");
             conf.put(
-                    "sasl.jaas.config",
-                    "org.apache.kafka.common.security.scram.ScramLoginModule required " +
-                            "username=\"" + username + "\" " +
-                            "password=\"" + password + "\";"
+                    "sasl.jaas.config",jaasConfig
             );
         }
         DefaultKafkaProducerFactory<String, Object> factory =
