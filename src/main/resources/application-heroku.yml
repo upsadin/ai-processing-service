@@ -28,6 +28,7 @@ spring:
         max.partition.fetch.bytes: 1048576
         receive.buffer.bytes: 65536
     producer:
+      transaction-id-prefix: ""
       buffer-memory: 524288
       batch-size: 4096
       properties:
