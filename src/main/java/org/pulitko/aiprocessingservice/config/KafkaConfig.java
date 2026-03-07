@@ -203,8 +203,8 @@ public class KafkaConfig {
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> conf = baseProducerConfig();
-        String username = System.getenv("KAFKACLUSTER_USERNAME");
-        String password = System.getenv("KAFKACLUSTER_PASSWORD");
+        String username = System.getenv("KAFKACLUSTER_USERNAME").trim();
+        String password = System.getenv("KAFKACLUSTER_PASSWORD").trim();
         String jaasTemplate = "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";";
         String jaasConfig = String.format(jaasTemplate, username, password);
         log.info("Kafka username length: {}", username.length());
