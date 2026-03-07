@@ -12,11 +12,12 @@ import org.pulitko.aiprocessingservice.exception.BaseBusinessException;
 import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
@@ -72,6 +73,7 @@ public class KafkaConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(prefix = "spring.kafka.producer", name = "transaction-id-prefix")
     public DefaultAfterRollbackProcessor<Object, Object> afterRollbackProcessor(
             DeserializationErrorService errorService) {
         ConsumerRecordRecoverer recoverer = (record, ex) -> {
@@ -145,15 +147,48 @@ public class KafkaConfig {
     }
 
     @Bean
+    @ConditionalOnMissingBean(AfterRollbackProcessor.class)
+    public DefaultErrorHandler defaultErrorHandler(DeserializationErrorService errorService) {
+        ConsumerRecordRecoverer recoverer = (record, ex) -> {
+            String rawPayload = record.value() != null ? record.value().toString() : "Could not extract data";
+            log.error("Recovery (non-tx): Saving to DB: {}", rawPayload);
+            errorService.saveError(rawPayload, ex.getMessage(), record.topic());
+        };
+
+        var backOff = new FixedBackOff(2000L, 3);
+        var handler = new DefaultErrorHandler(recoverer, backOff);
+
+        handler.addNotRetryableExceptions(
+                org.springframework.kafka.support.serializer.DeserializationException.class,
+                org.springframework.messaging.converter.MessageConversionException.class,
+                BaseBusinessException.class,
+                org.springframework.messaging.handler.invocation.MethodArgumentResolutionException.class
+        );
+
+        handler.addRetryableExceptions(
+                org.springframework.dao.DataAccessException.class,
+                java.net.ConnectException.class,
+                org.springframework.web.client.ResourceAccessException.class,
+                java.util.concurrent.RejectedExecutionException.class,
+                org.springframework.kafka.KafkaException.class,
+                java.util.concurrent.TimeoutException.class
+        );
+
+        return handler;
+    }
+
+    @Bean
     ConcurrentKafkaListenerContainerFactory<String, IncomingMessage> kafkaListenerContainerFactory(
             ConsumerFactory<String, IncomingMessage> consumerFactory,
-            AfterRollbackProcessor<Object, Object> afterRollbackProcessor,
-            ObjectProvider<KafkaTransactionManager<String, Object>> transactionManagerProvider) {
+            ObjectProvider<AfterRollbackProcessor<Object, Object>> afterRollbackProcessorProvider,
+            ObjectProvider<KafkaTransactionManager<String, Object>> transactionManagerProvider,
+            ObjectProvider<DefaultErrorHandler> errorHandlerProvider) {
         log.info("Creating KafkaListenerContainerFactory bean");
         ConcurrentKafkaListenerContainerFactory<String, IncomingMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
-        factory.setAfterRollbackProcessor(afterRollbackProcessor);
+        afterRollbackProcessorProvider.ifAvailable(factory::setAfterRollbackProcessor);
         transactionManagerProvider.ifAvailable(factory.getContainerProperties()::setKafkaAwareTransactionManager);
+        errorHandlerProvider.ifAvailable(factory::setCommonErrorHandler);
         factory.setAutoStartup(true);
         return factory;
     }
@@ -200,6 +235,7 @@ public class KafkaConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(prefix = "spring.kafka.producer", name = "transaction-id-prefix")
     public KafkaTransactionManager<String, Object> kafkaTransactionManager(
             ProducerFactory<String, Object> producerFactory) {
         return new KafkaTransactionManager<>(producerFactory);
