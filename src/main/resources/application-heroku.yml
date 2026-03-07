@@ -18,6 +18,7 @@ spring:
         max.partition.fetch.bytes: 1048576
         receive.buffer.bytes: 65536
     producer:
+      transaction-id-prefix: ""
       buffer-memory: 524288
       batch-size: 4096
       properties:
@@ -27,12 +28,12 @@ spring:
       concurrency: 1
       type: single
     topics:
-      incoming: ${KAFKACLUSTER_PREFIX}ai.processing.raw
-      outgoing: ${KAFKACLUSTER_PREFIX}ai.processing.filtered
-      processing-dlq: ${KAFKACLUSTER_PREFIX}ai.processing.business.dlq
+      incoming: ${KAFKACLUSTER_PREFIX}-ai.processing.raw
+      outgoing: ${KAFKACLUSTER_PREFIX}-ai.processing.filtered
+      processing-dlq: ${KAFKACLUSTER_PREFIX}-ai.processing.business.dlq
     groups-id:
-      consumer: ${KAFKACLUSTER_PREFIX}ai-processing
-      dlq: ${KAFKACLUSTER_PREFIX}ai-processing-dlq
+      consumer: ${KAFKACLUSTER_PREFIX}-ai-processing
+      dlq: ${KAFKACLUSTER_PREFIX}-ai-processing-dlq
     admin:
       auto-create: false
   main:
