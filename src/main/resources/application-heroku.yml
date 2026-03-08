@@ -13,7 +13,6 @@ spring:
       max-poll-records: 1
       isolation-level: read_uncommitted
       properties:
-        spring.json.trusted.packages: "*"
         fetch.max.bytes: 1048576
         max.partition.fetch.bytes: 1048576
         receive.buffer.bytes: 65536
