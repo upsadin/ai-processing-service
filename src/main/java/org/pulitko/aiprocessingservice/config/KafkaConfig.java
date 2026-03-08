@@ -12,8 +12,8 @@ import org.pulitko.aiprocessingservice.exception.BaseBusinessException;
 import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
@@ -73,7 +73,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "spring.kafka.producer", name = "transaction-id-prefix")
+    @ConditionalOnExpression("!'${spring.kafka.producer.transaction-id-prefix:}'.trim().isEmpty()")
     public DefaultAfterRollbackProcessor<Object, Object> afterRollbackProcessor(
             DeserializationErrorService errorService) {
         ConsumerRecordRecoverer recoverer = (record, ex) -> {
@@ -229,7 +229,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "spring.kafka.producer", name = "transaction-id-prefix")
+    @ConditionalOnExpression("!'${spring.kafka.producer.transaction-id-prefix:}'.trim().isEmpty()")
     public KafkaTransactionManager<String, Object> kafkaTransactionManager(
             ProducerFactory<String, Object> producerFactory) {
         return new KafkaTransactionManager<>(producerFactory);
