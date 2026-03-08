@@ -1,12 +1,14 @@
 package org.pulitko.aiprocessingservice.kafka;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.pulitko.aiprocessingservice.dto.OutgoingMessage;
 import org.pulitko.aiprocessingservice.exception.BaseBusinessException;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.service.AiProcessingService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -22,6 +24,15 @@ public class KafkaIncomingHandler {
     private final AiProcessingService aiProcessingService;
     private final KafkaOutgoingPublisher kafkaOutgoingPublisher;
     private final DlqPublisher dlqPublisher;
+
+    @Value("${spring.kafka.topics.incoming}")
+    String topic;
+
+    @PostConstruct
+    public void init() {
+        log.info("Kafka listener bean created");
+        log.info("Topic = {}", topic);
+    }
 
     @KafkaListener(
             topics = "${spring.kafka.topics.incoming}",
