@@ -10,10 +10,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.exception.BaseBusinessException;
 import org.pulitko.aiprocessingservice.service.DeserializationErrorService;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
@@ -72,11 +69,8 @@ public class KafkaConfig {
         );
     }
 
-    @Bean
-    @ConditionalOnExpression("!'${spring.kafka.producer.transaction-id-prefix:}'.trim().isEmpty()")
-    public DefaultAfterRollbackProcessor<Object, Object> afterRollbackProcessor(
-            DeserializationErrorService errorService) {
-        ConsumerRecordRecoverer recoverer = (record, ex) -> {
+    private ConsumerRecordRecoverer createRecoverer(DeserializationErrorService errorService) {
+        return (record, ex) -> {
             String rawPayload = null;
 
             if (ex instanceof org.springframework.kafka.listener.ListenerExecutionFailedException) {
@@ -118,22 +112,18 @@ public class KafkaConfig {
 
             String finalData = (rawPayload != null) ? rawPayload : "Could not extract data";
 
-            log.error("Recovery success: Saving to DB: {}", finalData);
+            log.error("Recovery: Saving to DB: {}", finalData);
             errorService.saveError(finalData, ex.getMessage(), record.topic());
         };
+    }
 
-        var backOff = new FixedBackOff(2000L, 3);
-
-        var processor = new DefaultAfterRollbackProcessor<>(recoverer, backOff);
-
+    private void addExceptionClassifications(DefaultAfterRollbackProcessor<?, ?> processor) {
         processor.addNotRetryableExceptions(
                 org.springframework.kafka.support.serializer.DeserializationException.class,
                 org.springframework.messaging.converter.MessageConversionException.class,
                 BaseBusinessException.class,
-                org.springframework.messaging.handler.invocation.MethodArgumentResolutionException.class,
-                org.springframework.messaging.converter.MessageConversionException.class
+                org.springframework.messaging.handler.invocation.MethodArgumentResolutionException.class
         );
-
         processor.addRetryableExceptions(
                 org.springframework.dao.DataAccessException.class,
                 java.net.ConnectException.class,
@@ -142,30 +132,16 @@ public class KafkaConfig {
                 org.springframework.kafka.KafkaException.class,
                 java.util.concurrent.TimeoutException.class
         );
-
-        return processor;
     }
 
-    @Bean
-    @ConditionalOnMissingBean(AfterRollbackProcessor.class)
-    public DefaultErrorHandler defaultErrorHandler(DeserializationErrorService errorService) {
-        ConsumerRecordRecoverer recoverer = (record, ex) -> {
-            String rawPayload = record.value() != null ? record.value().toString() : "Could not extract data";
-            log.error("Recovery (non-tx): Saving to DB: {}", rawPayload);
-            errorService.saveError(rawPayload, ex.getMessage(), record.topic());
-        };
-
-        var backOff = new FixedBackOff(2000L, 3);
-        var handler = new DefaultErrorHandler(recoverer, backOff);
-
-        handler.addNotRetryableExceptions(
+    private void addExceptionClassifications(DefaultErrorHandler errorHandler) {
+        errorHandler.addNotRetryableExceptions(
                 org.springframework.kafka.support.serializer.DeserializationException.class,
                 org.springframework.messaging.converter.MessageConversionException.class,
                 BaseBusinessException.class,
                 org.springframework.messaging.handler.invocation.MethodArgumentResolutionException.class
         );
-
-        handler.addRetryableExceptions(
+        errorHandler.addRetryableExceptions(
                 org.springframework.dao.DataAccessException.class,
                 java.net.ConnectException.class,
                 org.springframework.web.client.ResourceAccessException.class,
@@ -173,22 +149,33 @@ public class KafkaConfig {
                 org.springframework.kafka.KafkaException.class,
                 java.util.concurrent.TimeoutException.class
         );
-
-        return handler;
     }
 
     @Bean
     ConcurrentKafkaListenerContainerFactory<String, IncomingMessage> kafkaListenerContainerFactory(
             ConsumerFactory<String, IncomingMessage> consumerFactory,
-            ObjectProvider<AfterRollbackProcessor<Object, Object>> afterRollbackProcessorProvider,
-            ObjectProvider<KafkaTransactionManager<String, Object>> transactionManagerProvider,
-            ObjectProvider<DefaultErrorHandler> errorHandlerProvider) {
+            ProducerFactory<String, Object> producerFactory) {
         log.info("Creating KafkaListenerContainerFactory bean");
         ConcurrentKafkaListenerContainerFactory<String, IncomingMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
-        afterRollbackProcessorProvider.ifAvailable(factory::setAfterRollbackProcessor);
-        transactionManagerProvider.ifAvailable(factory.getContainerProperties()::setKafkaAwareTransactionManager);
-        errorHandlerProvider.ifAvailable(factory::setCommonErrorHandler);
+
+        var backOff = new FixedBackOff(2000L, 3);
+        var recoverer = createRecoverer(errorService);
+
+        if (producerFactory.transactionCapable()) {
+            log.info("Transactions enabled — using KafkaTransactionManager + AfterRollbackProcessor");
+            factory.getContainerProperties().setKafkaAwareTransactionManager(
+                    new KafkaTransactionManager<>(producerFactory));
+            var processor = new DefaultAfterRollbackProcessor<>(recoverer, backOff);
+            addExceptionClassifications(processor);
+            factory.setAfterRollbackProcessor(processor);
+        } else {
+            log.info("Transactions disabled — using DefaultErrorHandler");
+            var errorHandler = new DefaultErrorHandler(recoverer, backOff);
+            addExceptionClassifications(errorHandler);
+            factory.setCommonErrorHandler(errorHandler);
+        }
+
         factory.setAutoStartup(true);
         return factory;
     }
@@ -226,13 +213,6 @@ public class KafkaConfig {
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
-    }
-
-    @Bean
-    @ConditionalOnExpression("!'${spring.kafka.producer.transaction-id-prefix:}'.trim().isEmpty()")
-    public KafkaTransactionManager<String, Object> kafkaTransactionManager(
-            ProducerFactory<String, Object> producerFactory) {
-        return new KafkaTransactionManager<>(producerFactory);
     }
 
     @Bean
