@@ -216,6 +216,16 @@ public class KafkaConfig {
     }
 
     @Bean
+    public KafkaTransactionManager<String, Object> kafkaTransactionManager(
+            ProducerFactory<String, Object> producerFactory) {
+        if (!producerFactory.transactionCapable()) {
+            log.info("ProducerFactory is not transactional — skipping KafkaTransactionManager bean");
+            return null;
+        }
+        return new KafkaTransactionManager<>(producerFactory);
+    }
+
+    @Bean
     public NewTopic createTopic() {
         return TopicBuilder.name(publisherTopic)
                 .partitions(3)
