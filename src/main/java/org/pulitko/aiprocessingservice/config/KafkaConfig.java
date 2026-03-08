@@ -206,7 +206,7 @@ public class KafkaConfig {
 //        String username = System.getenv("KAFKACLUSTER_USERNAME").trim();
 //        String password = System.getenv("KAFKACLUSTER_PASSWORD").trim();
         String username ="t1155326334498340866";
-        String password ="OyRXhC6mUBRsfuMN2U1cX3K3LPYFmXCt";
+        String password ="x5pnoHHQIvZvqohy9FRb4hW8IxNZNps1";
                 String jaasTemplate = "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";";
         String jaasConfig = String.format(jaasTemplate, username, password);
         log.info("Kafka username length: {}", username.length());
