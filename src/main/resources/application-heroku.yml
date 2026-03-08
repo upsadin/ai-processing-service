@@ -36,9 +36,6 @@ spring:
       dlq: ${KAFKACLUSTER_PREFIX}-ai-processing-dlq
     admin:
       auto-create: false
-  main:
-    lazy-initialization: true
-
   jpa:
     open-in-view: false
 server:
