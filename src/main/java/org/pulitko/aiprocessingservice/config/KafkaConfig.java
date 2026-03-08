@@ -50,12 +50,26 @@ public class KafkaConfig {
 
     private final DeserializationErrorService errorService;
 
+    private String buildJaasConfig() {
+        String username = System.getenv("KAFKACLUSTER_USERNAME");
+        String password = System.getenv("KAFKACLUSTER_PASSWORD");
+        if (username != null && password != null) {
+            String jaasTemplate = "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";";
+            return String.format(jaasTemplate, username.trim(), password.trim());
+        }
+        return null;
+    }
+
     @Bean
     public ConsumerFactory<String, IncomingMessage> consumerFactory() {
         Map<String, Object> config = kafkaProperties.buildConsumerProperties(null);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
+        String jaasConfig = buildJaasConfig();
+        if (jaasConfig != null) {
+            config.put("sasl.jaas.config", jaasConfig);
+        }
         JsonDeserializer<IncomingMessage> jsonDeserializer = new JsonDeserializer<>(IncomingMessage.class);
         jsonDeserializer.addTrustedPackages("org.pulitko.aiprocessingservice.model");
         jsonDeserializer.setRemoveTypeHeaders(false);
