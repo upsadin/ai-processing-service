@@ -63,9 +63,6 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<String, IncomingMessage> consumerFactory() {
         Map<String, Object> config = kafkaProperties.buildConsumerProperties(null);
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
-        config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
         String jaasConfig = buildJaasConfig();
         if (jaasConfig != null) {
             config.put("sasl.jaas.config", jaasConfig);
