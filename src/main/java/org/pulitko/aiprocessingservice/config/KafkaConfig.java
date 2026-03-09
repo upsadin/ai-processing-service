@@ -67,6 +67,11 @@ public class KafkaConfig {
         if (jaasConfig != null) {
             config.put("sasl.jaas.config", jaasConfig);
         }
+        log.info("ConsumerFactory config: bootstrap.servers={}, security.protocol={}, sasl.mechanism={}, sasl.jaas.config={}",
+                config.get("bootstrap.servers"),
+                config.get("security.protocol"),
+                config.get("sasl.mechanism"),
+                jaasConfig != null ? "[SET]" : "[NOT SET]");
         JsonDeserializer<IncomingMessage> jsonDeserializer = new JsonDeserializer<>(IncomingMessage.class);
         jsonDeserializer.addTrustedPackages("org.pulitko.aiprocessingservice.dto", "org.pulitko.aiprocessingservice.model");
         jsonDeserializer.setRemoveTypeHeaders(false);
