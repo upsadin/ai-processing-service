@@ -41,4 +41,5 @@ server:
   forward-headers-strategy: framework
 logging:
   level:
-    org.apache.kafka: DEBUG
+    org.apache.kafka: WARN
+    org.springframework.kafka: INFO
