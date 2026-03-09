@@ -2,6 +2,7 @@ package org.pulitko.aiprocessingservice.api;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import java.util.UUID;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -23,7 +24,7 @@ public class TestController {
     @PostMapping("/send")
     public String send(@RequestBody IncomingMessage message) {
         ProducerRecord<String, Object> record = new ProducerRecord<>(topic, message);
-        record.headers().add("x-sourceId", "x1".getBytes());
+        record.headers().add("x-sourceId", UUID.randomUUID().toString().getBytes());
         if (kafkaTemplate.isTransactional()) {
             kafkaTemplate.executeInTransaction(t -> t.send(record));
         } else {
