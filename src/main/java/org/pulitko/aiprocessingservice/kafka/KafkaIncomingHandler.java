@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.pulitko.aiprocessingservice.dto.OutgoingMessage;
 import org.pulitko.aiprocessingservice.exception.BaseBusinessException;
+import org.pulitko.aiprocessingservice.exception.MissingHeaderException;
 import org.pulitko.aiprocessingservice.dto.IncomingMessage;
 import org.pulitko.aiprocessingservice.service.AiProcessingService;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +41,11 @@ public class KafkaIncomingHandler {
             containerFactory = "kafkaListenerContainerFactory",
             concurrency = "${spring.kafka.consumer.concurrency}")
     public void handle(@Payload IncomingMessage message,
-                       @Header("x-sourceId") String sourceId) {
+                       @Header(name = "x-sourceId", required = false) String sourceId) {
+
+        if (sourceId == null || sourceId.isBlank()) {
+            throw new MissingHeaderException("x-sourceId");
+        }
 
         if (message == null || message.payload().isBlank()) {
             log.warn("Payload is null or empty, check for errors in headers.");
