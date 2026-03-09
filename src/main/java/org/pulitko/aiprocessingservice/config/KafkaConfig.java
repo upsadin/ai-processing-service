@@ -68,7 +68,7 @@ public class KafkaConfig {
             config.put("sasl.jaas.config", jaasConfig);
         }
         JsonDeserializer<IncomingMessage> jsonDeserializer = new JsonDeserializer<>(IncomingMessage.class);
-        jsonDeserializer.addTrustedPackages("org.pulitko.aiprocessingservice.model");
+        jsonDeserializer.addTrustedPackages("org.pulitko.aiprocessingservice.dto", "org.pulitko.aiprocessingservice.model");
         jsonDeserializer.setRemoveTypeHeaders(false);
         ErrorHandlingDeserializer<IncomingMessage> errorHandlingDeserializer =
                 new ErrorHandlingDeserializer<>(jsonDeserializer);
